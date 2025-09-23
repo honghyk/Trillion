@@ -1,0 +1,61 @@
+package trillion.wms.core.database.dao
+
+import androidx.room.Dao
+import androidx.room.Delete
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import androidx.room.Update
+import kotlinx.coroutines.flow.Flow
+import trillion.wms.core.database.model.FabricRollEntity
+
+@Dao
+internal interface FabricRollDao {
+    @Query("SELECT * FROM fabric_rolls WHERE id = :id")
+    fun getFabricRollStream(id: Long): Flow<FabricRollEntity?>
+
+    @Query("SELECT * FROM fabric_rolls ORDER BY id ASC")
+    fun getAllFabricRollsStream(): Flow<List<FabricRollEntity>>
+
+    @Query("SELECT * FROM fabric_rolls WHERE zone_id = :zoneId ORDER BY id ASC")
+    fun getFabricRollsStreamByZoneId(zoneId: Long): Flow<List<FabricRollEntity>>
+
+    @Query(
+        """
+        SELECT * FROM fabric_rolls
+        WHERE 
+            (:zoneId IS NULL OR zone_id = :zoneId) AND 
+            (
+                CAST(id AS TEXT) LIKE '%' || :query || '%' OR 
+                item_no LIKE '%' || :query || '%' OR 
+                order_no LIKE '%' || :query || '%' OR 
+                color LIKE '%' || :query || '%' OR 
+                factory LIKE '%' || :query || '%' OR 
+                finish LIKE '%' || :query || '%'
+            )
+        ORDER BY id ASC
+    """
+    )
+    fun searchFabricRolls(query: String, zoneId: Long?): Flow<List<FabricRollEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(fabricRoll: FabricRollEntity): Long
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(fabricRolls: List<FabricRollEntity>)
+
+    @Update
+    suspend fun update(fabricRoll: FabricRollEntity)
+
+    @Delete
+    suspend fun delete(fabricRoll: FabricRollEntity)
+
+    @Query("DELETE FROM fabric_rolls WHERE id = :id")
+    suspend fun deleteById(id: Long)
+
+    @Query("DELETE FROM fabric_rolls WHERE zone_id = :zoneId")
+    suspend fun deleteByZoneId(zoneId: Long)
+
+    @Query("DELETE FROM fabric_rolls")
+    suspend fun clearAll()
+}

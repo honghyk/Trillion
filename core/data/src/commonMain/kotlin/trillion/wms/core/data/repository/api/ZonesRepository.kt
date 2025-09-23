@@ -1,0 +1,16 @@
+package trillion.wms.core.data.repository.api
+
+import kotlinx.coroutines.flow.Flow
+import trillion.wms.core.model.CreateZoneRequest
+import trillion.wms.core.model.UpdateZoneRequest
+import trillion.wms.core.model.Zone
+
+interface ZonesRepository {
+    fun getZoneStream(id: Long, forceRefresh: Boolean = false): Flow<Zone?>
+    fun getZoneByRollIdStream(rollId: Long, forceRefresh: Boolean = false): Flow<Zone?>
+    fun getZonesStream(forceRefresh: Boolean = false): Flow<List<Zone>>
+
+    suspend fun createZone(request: CreateZoneRequest)
+    suspend fun updateZone(request: UpdateZoneRequest)
+    suspend fun deleteZone(id: Long)
+}
