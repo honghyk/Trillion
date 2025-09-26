@@ -5,6 +5,7 @@ import trillion.wms.core.ui.utils.UiResult
 import trillion.wms.core.model.FabricRoll
 import trillion.wms.core.model.OutboundHistory
 import trillion.wms.core.model.Zone
+import trillion.wms.core.ui.utils.UiMessage
 
 data class FabricRollDetailUiState(
     val zone: UiResult<Zone> = UiResult.Loading,
@@ -12,10 +13,5 @@ data class FabricRollDetailUiState(
     val outboundHistories: UiResult<List<OutboundHistory>> = UiResult.Loading,
     val lengthUnit: LengthUnit = LengthUnit.METER,
     val isRefreshing: Boolean = false,
-    val sideEffect: SideEffect? = null,
-) {
-
-    sealed interface SideEffect {
-        data class ShowSnackbar(val message: String): SideEffect
-    }
-}
+    val message: UiMessage? = null,
+)

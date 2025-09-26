@@ -1,4 +1,5 @@
 plugins {
+    alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.trillion.wms.feature)
 }
 
@@ -10,6 +11,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(libs.kotlinx.datetime)
+            implementation(libs.kotlinx.serialization)
         }
     }
 }

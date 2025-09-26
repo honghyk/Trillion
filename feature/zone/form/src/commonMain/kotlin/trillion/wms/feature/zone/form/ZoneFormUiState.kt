@@ -1,17 +1,13 @@
 package trillion.wms.feature.zone.form
 
+import trillion.wms.core.ui.model.FormSubmitState
 import trillion.wms.core.ui.model.TextFormFieldState
 
 data class ZoneFormUiState(
-    val nameFieldState: TextFormFieldState = TextFormFieldState(value = ""),
-    val descriptionFieldState: TextFormFieldState = TextFormFieldState(value = ""),
-    val submitInProgress: Boolean = false,
-    val sideEffect: SideEffect? = null,
+    val nameField: TextFormFieldState = TextFormFieldState(value = ""),
+    val descriptionField: TextFormFieldState = TextFormFieldState(value = ""),
+    val formSubmitState: FormSubmitState = FormSubmitState.IDLE,
 ) {
     val submitEnabled: Boolean
-        get() = nameFieldState.value.isNotEmpty()
-
-    sealed interface SideEffect {
-        data object Dismiss : SideEffect
-    }
+        get() = nameField.value.isNotEmpty()
 }

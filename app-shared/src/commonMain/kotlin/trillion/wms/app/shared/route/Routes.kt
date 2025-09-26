@@ -24,10 +24,15 @@ data class ZoneForm(val zoneId: Long?) : AppRoute
 data class FabricRollDetail(val rollId: Long) : AppRoute
 
 @Serializable
-data class FabricRollForm(
-    val zoneId: Long,
+class FabricRollForm private constructor(
+    val zoneId: Long?,
     val rollId: Long?
-) : AppRoute
+) : AppRoute {
+    companion object {
+        fun add(zoneId: Long) = FabricRollForm(zoneId, null)
+        fun edit(rollId: Long) = FabricRollForm(null, rollId)
+    }
+}
 
 @Serializable
 data object Inventory : AppRoute

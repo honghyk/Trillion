@@ -7,7 +7,7 @@ import trillion.wms.core.domain.di.usecaseModule
 val fabricRollFormModule = module {
     includes(usecaseModule)
 
-    viewModel { (zoneId: Long, rollId: Long?) ->
+    viewModel { (zoneId: Long?, rollId: Long?) ->
         FabricRollFormViewModel(
             zoneId = zoneId,
             rollId = rollId,

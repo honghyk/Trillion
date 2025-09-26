@@ -2,6 +2,7 @@ package trillion.wms.core.ui.model
 
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format.DateTimeFormat
+import trillion.wms.core.ui.utils.formatDecimal
 
 abstract class FormFieldState<T> {
     abstract val value: T
@@ -70,7 +71,7 @@ object Validators {
         when {
             value.isEmpty() -> null
             value.toDoubleOrNull() == null -> "잘못된 숫자입니다"
-            value.toDouble() !in min..max -> errorMessage ?: "$min 이상 $max 이하여야 합니다"
+            value.toDouble() !in min..max -> errorMessage ?: "$min 이상 ${max.formatDecimal(1)} 이하여야 합니다"
             else -> null
         }
     }

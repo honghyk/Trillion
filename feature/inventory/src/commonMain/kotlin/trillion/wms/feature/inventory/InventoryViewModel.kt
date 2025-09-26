@@ -14,8 +14,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import trillion.wms.core.ui.model.LengthUnit
 import trillion.wms.core.ui.utils.RefreshableUiResultFlow
-import trillion.wms.core.ui.utils.cancellableRunCatching
-import trillion.wms.feature.inventory.InventoryUiState.SideEffect
 import trillion.wms.feature.inventory.SearchUiState.*
 import trillion.wms.core.domain.DeleteFabricRollUseCase
 import trillion.wms.core.domain.GetInventoryOverViewStreamUseCase
@@ -23,6 +21,7 @@ import trillion.wms.core.domain.GetZonesStreamUseCase
 import trillion.wms.core.domain.SearchFabricRollsStreamUseCase
 import trillion.wms.core.model.FabricRoll
 import trillion.wms.core.model.InventorySummary
+import trillion.wms.core.ui.utils.UiMessageManager
 
 class InventoryViewModel(
     getZonesStream: GetZonesStreamUseCase,
@@ -30,6 +29,8 @@ class InventoryViewModel(
     private val searchFabricRollsStream: SearchFabricRollsStreamUseCase,
     private val deleteFabricRoll: DeleteFabricRollUseCase,
 ) : ViewModel() {
+
+    private val uiMessageManager = UiMessageManager()
 
     private val searchQuery = MutableStateFlow("")
     private val lengthUnit = MutableStateFlow(LengthUnit.METER)
@@ -86,13 +87,11 @@ class InventoryViewModel(
         searchResults.isRefreshing
     ) { refreshingStates -> refreshingStates.any { it } }
 
-    private val sideEffect = MutableStateFlow<SideEffect?>(null)
-
     val uiState = combine(
         inventorySummaryUiState,
         searchUiState,
         isRefreshing,
-        sideEffect,
+        uiMessageManager.message,
         ::InventoryUiState
     ).stateIn(
         scope = viewModelScope,
@@ -114,9 +113,11 @@ class InventoryViewModel(
 
     fun deleteFabricRoll(fabricRoll: FabricRoll) {
         viewModelScope.launch {
-            cancellableRunCatching { deleteFabricRoll(fabricRoll.id) }
-                .onSuccess { sideEffect.emit(SideEffect.ShowSnackbar("롤이 삭제되었습니다.")) }
-                .onFailure { sideEffect.emit(SideEffect.ShowSnackbar("롤을 삭제하지 못했습니다.")) }
+            deleteFabricRoll(fabricRoll.id)
+                .fold(
+                    onSuccess = { uiMessageManager.emitMessage("롤이 삭제되었습니다") },
+                    onFailure = { uiMessageManager.emitMessage("롤을 삭제하지 못했습니다") }
+                )
         }
     }
 
@@ -125,7 +126,7 @@ class InventoryViewModel(
         inventorySummary.refresh()
     }
 
-    fun onSideEffectConsumed() {
-        sideEffect.value = null
+    fun clearMessage(id: Long) {
+        uiMessageManager.clearMessage(id)
     }
 }

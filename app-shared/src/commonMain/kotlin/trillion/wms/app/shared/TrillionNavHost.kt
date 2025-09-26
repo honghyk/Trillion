@@ -11,15 +11,15 @@ import trillion.wms.app.shared.destination.fabricRollFormDialogDestination
 import trillion.wms.app.shared.destination.fabricRollOutboundFormDialogDestination
 import trillion.wms.app.shared.destination.inventoryDestination
 import trillion.wms.app.shared.destination.zoneDestinations
+import trillion.wms.app.shared.route.BaseInventory
+import trillion.wms.app.shared.route.BaseZoneList
 import trillion.wms.app.shared.route.FabricRollDetail
 import trillion.wms.app.shared.route.FabricRollForm
 import trillion.wms.app.shared.route.Inventory
-import trillion.wms.app.shared.route.BaseInventory
 import trillion.wms.app.shared.route.OutboundForm
 import trillion.wms.app.shared.route.ZoneDetail
 import trillion.wms.app.shared.route.ZoneForm
 import trillion.wms.app.shared.route.ZoneList
-import trillion.wms.app.shared.route.BaseZoneList
 
 @Composable
 fun TrillionNavHost(
@@ -39,10 +39,10 @@ fun TrillionNavHost(
                 onZoneItemClick = { navController.navigate(ZoneDetail(it)) },
                 onAddZoneClick = { navController.navigate(ZoneForm(null)) },
                 onAddFabricRollClick = { zoneId ->
-                    navController.navigate(FabricRollForm(zoneId, null))
+                    navController.navigate(FabricRollForm.add(zoneId))
                 },
-                onEditFabricRollClick = { zoneId, rollId ->
-                    navController.navigate(FabricRollForm(zoneId, rollId))
+                onEditFabricRollClick = { rollId ->
+                    navController.navigate(FabricRollForm.edit(rollId))
                 },
                 onOutboundFabricRollClick = { navController.navigate(OutboundForm(it)) },
                 onFabricRollTableItemClick = { navController.navigate(FabricRollDetail(it)) },
@@ -50,8 +50,8 @@ fun TrillionNavHost(
             fabricRollDetailDestination(
                 onBackClick = { navController.popBackStack() },
                 onOutboundFabricRollClick = { navController.navigate(OutboundForm(it)) },
-                onEditFabricRollClick = { zoneId, rollId ->
-                    navController.navigate(FabricRollForm(zoneId, rollId))
+                onEditFabricRollClick = { rollId ->
+                    navController.navigate(FabricRollForm.edit(rollId))
                 },
             )
         }
@@ -62,15 +62,15 @@ fun TrillionNavHost(
             inventoryDestination(
                 onFabricRollTableItemClick = { navController.navigate(FabricRollDetail(it)) },
                 onOutboundFabricRollClick = { navController.navigate(OutboundForm(it)) },
-                onEditFabricRollClick = { zoneId, rollId ->
-                    navController.navigate(FabricRollForm(zoneId, rollId))
+                onEditFabricRollClick = { rollId ->
+                    navController.navigate(FabricRollForm.edit(rollId))
                 },
             )
             fabricRollDetailDestination(
                 onBackClick = { navController.popBackStack() },
                 onOutboundFabricRollClick = { navController.navigate(OutboundForm(it)) },
-                onEditFabricRollClick = { zoneId, rollId ->
-                    navController.navigate(FabricRollForm(zoneId, rollId))
+                onEditFabricRollClick = { rollId ->
+                    navController.navigate(FabricRollForm.edit(rollId))
                 },
             )
         }

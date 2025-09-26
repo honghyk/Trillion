@@ -2,6 +2,7 @@ package trillion.wms.feature.fabricroll.form
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,27 +21,36 @@ import trillion.wms.core.model.FabricRollMutationRequest
 import trillion.wms.core.model.UpdateFabricRollRequest
 import trillion.wms.core.model.Zone
 import trillion.wms.core.model.exception.AlreadyExistsException
+import trillion.wms.core.ui.model.FormSubmitState
 import trillion.wms.core.ui.model.LengthUnit
 import trillion.wms.core.ui.utils.cancellableRunCatching
 import trillion.wms.core.ui.utils.formatDecimal
 
 class FabricRollFormViewModel(
-    private val zoneId: Long,
-    private val rollId: Long?,
+    zoneId: Long?,
+    rollId: Long?,
+    getFabricRollStream: GetFabricRollStreamUseCase,
     private val getZonesStream: GetZonesStreamUseCase,
-    private val getFabricRollStream: GetFabricRollStreamUseCase,
     private val addFabricRoll: AddFabricRollUseCase,
     private val updateFabricRoll: UpdateFabricRollUseCase,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(FabricRollFormUiState(isEdit = rollId != null))
+    private val isInEditMode: Boolean = rollId != null
+
+    private val _uiState = MutableStateFlow(FabricRollFormUiState(isInEditMode = isInEditMode))
     val uiState: StateFlow<FabricRollFormUiState> = _uiState.asStateFlow()
+
+    private val fabricRoll: Flow<FabricRoll?> = if (rollId == null) {
+        flowOf(null)
+    } else {
+        getFabricRollStream(rollId)
+    }
 
     init {
         viewModelScope.launch {
             combine(
                 getZonesStream(),
-                if (rollId != null) getFabricRollStream(rollId) else flowOf(null),
+                fabricRoll,
                 ::Pair
             ).collectLatest { (zones, fabricRoll) ->
                 _uiState.update { it.toLoadedState(zones, zoneId, fabricRoll) }
@@ -57,7 +67,7 @@ class FabricRollFormViewModel(
     fun updateRollId(value: String) {
         _uiState.update {
             it.copy(
-                rollIdFieldState = it.rollIdFieldState.copy(
+                rollIdField = it.rollIdField.copy(
                     value = value,
                     serverErrorMessage = null
                 )
@@ -67,43 +77,43 @@ class FabricRollFormViewModel(
 
     fun updateItemNo(value: String) {
         _uiState.update {
-            it.copy(itemNoFieldState = it.itemNoFieldState.copy(value = value))
+            it.copy(itemNoField = it.itemNoField.copy(value = value))
         }
     }
 
     fun updateOrderNo(value: String) {
         _uiState.update {
-            it.copy(orderNoFieldState = it.orderNoFieldState.copy(value = value))
+            it.copy(orderNoField = it.orderNoField.copy(value = value))
         }
     }
 
     fun updateColor(value: String) {
         _uiState.update {
-            it.copy(colorFieldState = it.colorFieldState.copy(value = value))
+            it.copy(colorField = it.colorField.copy(value = value))
         }
     }
 
     fun updateFactory(value: String) {
         _uiState.update {
-            it.copy(factoryFieldState = it.factoryFieldState.copy(value = value))
+            it.copy(factoryField = it.factoryField.copy(value = value))
         }
     }
 
     fun updateFinish(value: String) {
         _uiState.update {
-            it.copy(finishFieldState = it.finishFieldState.copy(value = value))
+            it.copy(finishField = it.finishField.copy(value = value))
         }
     }
 
     fun updateRemark(value: String) {
         _uiState.update {
-            it.copy(remarkFieldState = it.remarkFieldState.copy(value = value))
+            it.copy(remarkField = it.remarkField.copy(value = value))
         }
     }
 
     fun updateQuantity(value: String) {
         _uiState.update {
-            it.copy(quantityFieldState = it.quantityFieldState.copy(value = value))
+            it.copy(quantityField = it.quantityField.copy(value = value))
         }
     }
 
@@ -113,74 +123,49 @@ class FabricRollFormViewModel(
         }
     }
 
-    fun onSideEffectConsumed() {
-        _uiState.update {
-            it.copy(sideEffect = null)
-        }
-    }
-
     fun submit() {
+        val currentState = uiState.value
+        if (currentState.formSubmitState == FormSubmitState.IN_PROGRESS) return
+
         viewModelScope.launch {
-            _uiState.update { it.copy(submitInProgress = true) }
-            cancellableRunCatching {
-                when (val request = buildRequest()) {
-                    is AddFabricRollRequest -> addFabricRoll(request)
-                    is UpdateFabricRollRequest -> updateFabricRoll(request)
-                }
-            }.onSuccess {
-                _uiState.update {
-                    it.copy(
-                        submitInProgress = false,
-                        sideEffect = FabricRollFormUiState.SideEffect.Dismiss
-                    )
-                }
-            }.onFailure { e ->
-                _uiState.update {
-                    it.copy(
-                        rollIdFieldState = it.rollIdFieldState.copy(
-                            serverErrorMessage = when (e) {
-                                is AlreadyExistsException -> "같은 번호 롤이 이미 존재합니다"
-                                else -> null
-                            }
-                        ),
-                        submitInProgress = false,
-                        sideEffect = FabricRollFormUiState.SideEffect.ShowSnackbar(
-                            message = when (e) {
-                                is AlreadyExistsException -> "같은 번호 롤이 이미 존재합니다"
-                                else -> "에러가 발생 했습니다"
-                            }
-                        )
-                    )
-                }
+            _uiState.update { it.copy(formSubmitState = FormSubmitState.IN_PROGRESS) }
+
+            val request = buildRequest()
+            val submitResult = when (request) {
+                is AddFabricRollRequest -> addFabricRoll(request)
+                is UpdateFabricRollRequest -> updateFabricRoll(request)
             }
+            submitResult
+                .fold(
+                    onSuccess = {
+                        _uiState.update { it.copy(formSubmitState = FormSubmitState.SUBMITTED) }
+                    },
+                    onFailure = { e ->
+                        _uiState.update {
+                            it.copy(
+                                rollIdField = it.rollIdField.copy(serverErrorMessage = e.getErrorMessage()),
+                                formSubmitState = FormSubmitState.IDLE,
+                            )
+                        }
+                    }
+                )
         }
     }
 
     private fun buildRequest(): FabricRollMutationRequest {
-        val id = uiState.value.rollIdFieldState.value.toLong()
-        val zoneId = uiState.value.selectedZone?.id
-        val itemNo = uiState.value.itemNoFieldState.value
-        val orderNo = uiState.value.orderNoFieldState.value
-        val color = uiState.value.colorFieldState.value
-        val factory = uiState.value.factoryFieldState.value
-        val finish = uiState.value.finishFieldState.value
-        val remark = uiState.value.remarkFieldState.value
+        val currentState = uiState.value
+        val id = currentState.rollIdField.value.toLong()
+        val zoneId = currentState.selectedZone?.id
+        val itemNo = currentState.itemNoField.value
+        val orderNo = currentState.orderNoField.value
+        val color = currentState.colorField.value
+        val factory = currentState.factoryField.value
+        val finish = currentState.finishField.value
+        val remark = currentState.remarkField.value
         val quantity =
-            uiState.value.quantityFieldState.value.toDouble() / uiState.value.lengthUnit.multiplier
+            currentState.quantityField.value.toDouble() / currentState.lengthUnit.multiplier
 
-        return if (rollId == null) {
-            AddFabricRollRequest(
-                id = id,
-                zoneId = zoneId!!,
-                itemNo = itemNo,
-                orderNo = orderNo,
-                color = color,
-                factory = factory,
-                finish = finish,
-                remark = remark,
-                quantity = quantity,
-            )
-        } else {
+        return if (isInEditMode) {
             UpdateFabricRollRequest(
                 id = id,
                 zoneId = zoneId,
@@ -192,29 +177,48 @@ class FabricRollFormViewModel(
                 remark = remark,
                 quantity = quantity,
             )
+        } else {
+            AddFabricRollRequest(
+                id = id,
+                zoneId = zoneId!!,
+                itemNo = itemNo,
+                orderNo = orderNo,
+                color = color,
+                factory = factory,
+                finish = finish,
+                remark = remark,
+                quantity = quantity,
+            )
+        }
+    }
+
+    private fun Throwable.getErrorMessage(): String? {
+        return when (this) {
+            is AlreadyExistsException -> "같은 번호 롤이 이미 존재합니다"
+            else -> null
         }
     }
 
     private fun FabricRollFormUiState.toLoadedState(
         zones: List<Zone>,
-        defaultZoneId: Long,
+        defaultZoneId: Long?,
         fabricRoll: FabricRoll?,
     ): FabricRollFormUiState = copy(
         zones = zones,
         selectedZone = zones.firstOrNull { it.id == (fabricRoll?.zoneId ?: defaultZoneId) },
-        rollIdFieldState = rollIdFieldState.copy(value = fabricRoll?.id?.toString() ?: ""),
-        itemNoFieldState = itemNoFieldState.copy(value = fabricRoll?.itemNo ?: ""),
-        orderNoFieldState = orderNoFieldState.copy(value = fabricRoll?.orderNo ?: ""),
-        colorFieldState = colorFieldState.copy(value = fabricRoll?.color ?: ""),
-        factoryFieldState = factoryFieldState.copy(value = fabricRoll?.factory ?: ""),
-        finishFieldState = finishFieldState.copy(value = fabricRoll?.finish ?: ""),
-        quantityFieldState = quantityFieldState.copy(
+        rollIdField = rollIdField.copy(value = fabricRoll?.id?.toString() ?: ""),
+        itemNoField = itemNoField.copy(value = fabricRoll?.itemNo ?: ""),
+        orderNoField = orderNoField.copy(value = fabricRoll?.orderNo ?: ""),
+        colorField = colorField.copy(value = fabricRoll?.color ?: ""),
+        factoryField = factoryField.copy(value = fabricRoll?.factory ?: ""),
+        finishField = finishField.copy(value = fabricRoll?.finish ?: ""),
+        quantityField = quantityField.copy(
             value = if (fabricRoll?.quantity != null) {
                 (fabricRoll.quantity * lengthUnit.multiplier).formatDecimal(1)
             } else {
                 ""
             }
         ),
-        remarkFieldState = remarkFieldState.copy(value = fabricRoll?.remark ?: ""),
+        remarkField = remarkField.copy(value = fabricRoll?.remark ?: ""),
     )
 }

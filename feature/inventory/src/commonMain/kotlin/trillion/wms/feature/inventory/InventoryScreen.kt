@@ -20,6 +20,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -51,7 +52,6 @@ import trillion.wms.core.ui.component.RefreshableContent
 import trillion.wms.core.ui.compositionlocal.safeDrawingWithBottomNavBar
 import trillion.wms.core.ui.model.LengthUnit
 import trillion.wms.core.ui.utils.UiResult
-import trillion.wms.core.ui.utils.UiSideEffectHandler
 import trillion.wms.core.ui.utils.formatDecimal
 import trillion.wms.feature.inventory.SearchUiState.Filters
 import trillion.wms.feature.inventory.SearchUiState.ZoneFilter
@@ -60,43 +60,30 @@ import trillion.wms.feature.inventory.SearchUiState.ZoneFilter
 fun InventoryScreen(
     onFabricRollTableItemClick: (Long) -> Unit,
     onOutboundFabricRollClick: (Long) -> Unit,
-    onEditFabricRollClick: (Long, Long) -> Unit,
+    onEditFabricRollClick: (Long) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: InventoryViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
 
     InventoryScreen(
         uiState = uiState,
-        snackbarHostState = snackbarHostState,
         onQueryChange = viewModel::updateSearchQuery,
         onZoneFilterSelect = viewModel::updateZoneFilter,
         onLengthUnitSelect = viewModel::updateDisplayLengthUnit,
         onFabricRollTableItemClick = { roll -> onFabricRollTableItemClick(roll.id) },
         onOutboundFabricRollClick = { roll -> onOutboundFabricRollClick(roll.id) },
-        onEditFabricRollClick = { roll -> onEditFabricRollClick(roll.zoneId, roll.id) },
+        onEditFabricRollClick = { roll -> onEditFabricRollClick(roll.id) },
         onDeleteFabricRollClick = viewModel::deleteFabricRoll,
         onRefresh = viewModel::refresh,
+        onMessageShown = viewModel::clearMessage,
         modifier = modifier,
     )
-
-    UiSideEffectHandler(
-        effect = uiState.sideEffect,
-        onConsumed = viewModel::onSideEffectConsumed,
-    ) { effect ->
-        when (effect) {
-            is InventoryUiState.SideEffect.ShowSnackbar -> {
-                snackbarHostState.showSnackbar(effect.message)
-            }
-        }
-    }
 }
 
 @Composable
 private fun InventoryScreen(
     uiState: InventoryUiState,
-    snackbarHostState: SnackbarHostState,
     onQueryChange: (String) -> Unit,
     onZoneFilterSelect: (ZoneFilter) -> Unit,
     onLengthUnitSelect: (LengthUnit) -> Unit,
@@ -105,12 +92,21 @@ private fun InventoryScreen(
     onEditFabricRollClick: (FabricRoll) -> Unit,
     onDeleteFabricRollClick: (FabricRoll) -> Unit,
     onRefresh: () -> Unit,
+    onMessageShown: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
+    if (uiState.message != null) {
+        LaunchedEffect(uiState.message) {
+            snackbarHostState.showSnackbar(uiState.message.message)
+            onMessageShown(uiState.message.id)
+        }
+    }
+
     SdsScaffold(
         modifier = modifier,
         topBar = {
-            TopAppBar(
+            InventoryAppBar(
                 isRefreshing = uiState.isRefreshing,
                 onRefresh = onRefresh,
             )
@@ -145,7 +141,7 @@ private fun InventoryScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TopAppBar(
+private fun InventoryAppBar(
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier,

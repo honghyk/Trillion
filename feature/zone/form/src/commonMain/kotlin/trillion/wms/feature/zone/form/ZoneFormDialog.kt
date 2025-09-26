@@ -16,6 +16,7 @@ import trillion.wms.core.designsystem.component.FormHorizontalTwoButton
 import trillion.wms.core.designsystem.component.FormTextField
 import trillion.wms.core.designsystem.component.FormDialogTitle
 import trillion.wms.core.designsystem.theme.SdsTheme
+import trillion.wms.core.ui.model.FormSubmitState
 import trillion.wms.core.ui.model.TextFormFieldState
 
 @Composable
@@ -29,7 +30,6 @@ fun ZoneFormDialog(
         uiState = uiState,
         onZoneNameChange = viewModel::updateNameField,
         onZoneDescriptionChange = viewModel::updateDescriptionField,
-        onSideEffectConsumed = viewModel::onSideEffectConsumed,
         onSubmit = viewModel::submit,
         onDismiss = onDismiss,
         modifier = modifier,
@@ -42,16 +42,13 @@ private fun ZoneFormDialog(
     modifier: Modifier = Modifier,
     onZoneNameChange: (String) -> Unit,
     onZoneDescriptionChange: (String) -> Unit,
-    onSideEffectConsumed: () -> Unit,
     onSubmit: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    LaunchedEffect(uiState.sideEffect) {
-        when (uiState.sideEffect) {
-            is ZoneFormUiState.SideEffect.Dismiss -> onDismiss()
-            null -> {}
+    LaunchedEffect(uiState.formSubmitState) {
+        if (uiState.formSubmitState == FormSubmitState.SUBMITTED) {
+            onDismiss()
         }
-        onSideEffectConsumed()
     }
 
     FormDialog(
@@ -67,7 +64,7 @@ private fun ZoneFormDialog(
                 primaryButtonState = FormButtonState(
                     text = "구역 생성",
                     enabled = uiState.submitEnabled,
-                    loading = uiState.submitInProgress,
+                    loading = uiState.formSubmitState == FormSubmitState.IN_PROGRESS,
                     onClick = onSubmit,
                 ),
                 secondaryButtonState = FormButtonState(
@@ -78,23 +75,23 @@ private fun ZoneFormDialog(
         },
     ) {
         FormTextField(
-            value = uiState.nameFieldState.value,
+            value = uiState.nameField.value,
             onValueChange = onZoneNameChange,
             label = "이름 *",
             placeholder = "이름을 입력하세요",
-            isError = uiState.nameFieldState.isError,
+            isError = uiState.nameField.isError,
             supportingText = {
-                uiState.nameFieldState.errorMessage?.let { errorMessage ->
+                uiState.nameField.errorMessage?.let { errorMessage ->
                     Text(text = errorMessage)
                 }
             }
         )
         FormTextField(
-            value = uiState.descriptionFieldState.value,
+            value = uiState.descriptionField.value,
             onValueChange = onZoneDescriptionChange,
             label = "설명 (선택사항)",
             placeholder = "설명을 입력하세요",
-            isError = uiState.descriptionFieldState.isError,
+            isError = uiState.descriptionField.isError,
             singleLine = false,
             modifier = Modifier.height(120.dp),
         )
@@ -107,12 +104,11 @@ private fun ZoneFormScreenPreview() {
     SdsTheme {
         ZoneFormDialog(
             uiState = ZoneFormUiState(
-                nameFieldState = TextFormFieldState(value = "A-1"),
-                descriptionFieldState = TextFormFieldState(value = ""),
+                nameField = TextFormFieldState(value = "A-1"),
+                descriptionField = TextFormFieldState(value = ""),
             ),
             onZoneNameChange = {},
             onZoneDescriptionChange = {},
-            onSideEffectConsumed = {},
             onSubmit = {},
             onDismiss = {},
         )

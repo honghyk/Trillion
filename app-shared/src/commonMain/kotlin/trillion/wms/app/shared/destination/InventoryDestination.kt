@@ -8,7 +8,7 @@ import trillion.wms.feature.inventory.InventoryScreen
 fun NavGraphBuilder.inventoryDestination(
     onFabricRollTableItemClick: (Long) -> Unit,
     onOutboundFabricRollClick: (Long) -> Unit,
-    onEditFabricRollClick: (Long, Long) -> Unit,
+    onEditFabricRollClick: (Long) -> Unit,
 ) {
     mainTabComposable<Inventory> {
         InventoryScreen(

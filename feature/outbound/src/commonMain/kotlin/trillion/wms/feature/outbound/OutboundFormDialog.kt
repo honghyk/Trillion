@@ -17,7 +17,9 @@ import trillion.wms.core.designsystem.component.FormDialogTitle
 import trillion.wms.core.designsystem.component.FormHorizontalTwoButton
 import trillion.wms.core.designsystem.component.FormTextField
 import trillion.wms.core.ui.component.QuantityFormField
+import trillion.wms.core.ui.model.FormSubmitState
 import trillion.wms.core.ui.model.LengthUnit
+import trillion.wms.core.ui.utils.formatDecimal
 
 @Composable
 fun OutboundFormDialog(
@@ -34,7 +36,6 @@ fun OutboundFormDialog(
         onBuyerChange = viewModel::onBuyerChange,
         onDateChange = viewModel::onDateChange,
         onRemarkChange = viewModel::onRemarkChange,
-        onSideEffectConsumed = viewModel::onSideEffectConsumed,
         onSubmit = viewModel::submit,
         onDismiss = onDismiss,
         modifier = modifier,
@@ -49,17 +50,14 @@ private fun OutboundFormScreen(
     onBuyerChange: (String) -> Unit,
     onDateChange: (String) -> Unit,
     onRemarkChange: (String) -> Unit,
-    onSideEffectConsumed: () -> Unit,
     onSubmit: () -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    LaunchedEffect(uiState.sideEffect) {
-        when (uiState.sideEffect) {
-            is OutboundFormUiState.SideEffect.Dismiss -> onDismiss()
-            null -> {}
+    LaunchedEffect(uiState.formSubmitState) {
+        if (uiState.formSubmitState == FormSubmitState.SUBMITTED) {
+            onDismiss()
         }
-        onSideEffectConsumed()
     }
 
     FormDialog(
@@ -75,7 +73,7 @@ private fun OutboundFormScreen(
                 primaryButtonState = FormButtonState(
                     text = "확인",
                     enabled = uiState.submitEnabled,
-                    loading = uiState.submitInProgress,
+                    loading = uiState.formSubmitState == FormSubmitState.IN_PROGRESS,
                     onClick = onSubmit,
                 ),
                 secondaryButtonState = FormButtonState(
@@ -87,19 +85,19 @@ private fun OutboundFormScreen(
     ) {
         FormTextField(
             label = "Item No",
-            value = uiState.itemNoFieldState.value,
+            value = uiState.itemNo,
             enabled = false,
             onValueChange = {},
         )
         FormTextField(
             label = "Order No",
-            value = uiState.orderNoFieldState.value,
+            value = uiState.orderNo,
             enabled = false,
             onValueChange = {},
         )
         FormTextField(
             label = "현재 수량",
-            value = uiState.availableQtyFieldState.value + when (uiState.lengthUnit) {
+            value = uiState.availableQtyInCurrentUnit.formatDecimal(1) + when (uiState.lengthUnit) {
                 LengthUnit.METER -> " m"
                 LengthUnit.YARD -> " yd"
             },
@@ -107,7 +105,7 @@ private fun OutboundFormScreen(
             onValueChange = {},
         )
         QuantityFormField(
-            quantityFieldState = uiState.qtyToProcessFieldState,
+            quantityFieldState = uiState.qtyToProcessField,
             lengthUnit = uiState.lengthUnit,
             onValueChange = onQtyToProcessChange,
             onLengthUnitSelected = onLengthUnitChange,
@@ -115,16 +113,16 @@ private fun OutboundFormScreen(
         FormTextField(
             label = "Buyer *",
             placeholder = "바이어를 입력하세요",
-            value = uiState.buyerFieldState.value,
+            value = uiState.buyerField.value,
             onValueChange = onBuyerChange,
         )
         FormDateField(
             label = "Date *",
-            value = uiState.dateFieldState.value,
+            value = uiState.dateField.value,
             placeholder = "2025-01-01",
-            isError = uiState.dateFieldState.isError,
+            isError = uiState.dateField.isError,
             supportingText = {
-                uiState.dateFieldState.errorMessage?.let {
+                uiState.dateField.errorMessage?.let {
                     Text(text = it)
                 }
             },
@@ -133,7 +131,7 @@ private fun OutboundFormScreen(
         FormTextField(
             label = "비고 (선택사항)",
             placeholder = "비고를 입력하세요",
-            value = uiState.remarkFieldState.value,
+            value = uiState.remarkField.value,
             onValueChange = onRemarkChange,
             singleLine = false,
             modifier = Modifier.height(120.dp),

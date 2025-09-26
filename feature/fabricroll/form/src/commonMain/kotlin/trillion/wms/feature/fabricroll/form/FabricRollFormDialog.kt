@@ -22,11 +22,12 @@ import trillion.wms.core.designsystem.component.FormNumberTextField
 import trillion.wms.core.designsystem.component.FormTextField
 import trillion.wms.core.model.Zone
 import trillion.wms.core.ui.component.QuantityFormField
+import trillion.wms.core.ui.model.FormSubmitState
 import trillion.wms.core.ui.model.LengthUnit
 
 @Composable
 fun FabricRollFormDialog(
-    zoneId: Long,
+    zoneId: Long?,
     rollId: Long?,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
@@ -37,7 +38,6 @@ fun FabricRollFormDialog(
         uiState = uiState,
         onDismiss = onDismiss,
         onSubmit = viewModel::submit,
-        onSideEffectConsumed = viewModel::onSideEffectConsumed,
         onZoneChange = viewModel::updateSelectedZone,
         onRollIdChange = viewModel::updateRollId,
         onItemNoChange = viewModel::updateItemNo,
@@ -57,7 +57,6 @@ private fun FabricRollFormDialog(
     uiState: FabricRollFormUiState,
     onDismiss: () -> Unit,
     onSubmit: () -> Unit,
-    onSideEffectConsumed: () -> Unit,
     onZoneChange: (Zone) -> Unit,
     onRollIdChange: (String) -> Unit,
     onItemNoChange: (String) -> Unit,
@@ -71,23 +70,17 @@ private fun FabricRollFormDialog(
     modifier: Modifier = Modifier,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
-    LaunchedEffect(uiState.sideEffect) {
-        when (uiState.sideEffect) {
-            is FabricRollFormUiState.SideEffect.Dismiss -> onDismiss()
-            is FabricRollFormUiState.SideEffect.ShowSnackbar -> {
-                snackbarHostState.showSnackbar(uiState.sideEffect.message)
-            }
-
-            null -> {}
+    LaunchedEffect(uiState.formSubmitState) {
+        if (uiState.formSubmitState == FormSubmitState.SUBMITTED) {
+            onDismiss()
         }
-        onSideEffectConsumed()
     }
 
     FormDialog(
         modifier = modifier,
         title = {
             FormDialogTitle(
-                title = if (uiState.isEdit) "롤 수정" else "롤 추가",
+                title = if (uiState.isInEditMode) "롤 수정" else "롤 추가",
                 onDismiss = onDismiss,
             )
         },
@@ -96,7 +89,7 @@ private fun FabricRollFormDialog(
                 primaryButtonState = FormButtonState(
                     text = "확인",
                     enabled = uiState.submitEnabled,
-                    loading = uiState.submitInProgress,
+                    loading = uiState.formSubmitState == FormSubmitState.IN_PROGRESS,
                     onClick = onSubmit,
                 ),
                 secondaryButtonState = FormButtonState(
@@ -116,55 +109,55 @@ private fun FabricRollFormDialog(
             )
             FormNumberTextField(
                 label = "No *",
-                value = uiState.rollIdFieldState.value,
+                value = uiState.rollIdField.value,
                 onValueChange = onRollIdChange,
-                enabled = !uiState.isEdit,
-                isError = uiState.rollIdFieldState.isError,
-                supportingText = { uiState.rollIdFieldState.errorMessage?.let { Text(it) } },
+                enabled = !uiState.isInEditMode,
+                isError = uiState.rollIdField.isError,
+                supportingText = { uiState.rollIdField.errorMessage?.let { Text(it) } },
                 placeholder = "번호를 입력하세요"
             )
             FormTextField(
                 label = "Item No",
-                value = uiState.itemNoFieldState.value,
+                value = uiState.itemNoField.value,
                 onValueChange = onItemNoChange,
-                isError = uiState.itemNoFieldState.isError,
-                supportingText = { uiState.itemNoFieldState.errorMessage?.let { Text(it) } },
+                isError = uiState.itemNoField.isError,
+                supportingText = { uiState.itemNoField.errorMessage?.let { Text(it) } },
                 placeholder = "품목 번호를 입력하세요"
             )
             QuantityFormField(
-                quantityFieldState = uiState.quantityFieldState,
+                quantityFieldState = uiState.quantityField,
                 lengthUnit = uiState.lengthUnit,
-                enabled = !uiState.isEdit,
+                enabled = !uiState.isInEditMode,
                 onValueChange = onQuantityChange,
                 onLengthUnitSelected = onLengthUnitChange,
             )
             FormTextField(
                 label = "Order No",
-                value = uiState.orderNoFieldState.value,
+                value = uiState.orderNoField.value,
                 onValueChange = onOrderNoChange,
                 placeholder = "주문 번호를 입력하세요"
             )
             FormTextField(
                 label = "Color",
-                value = uiState.colorFieldState.value,
+                value = uiState.colorField.value,
                 onValueChange = onColorChange,
                 placeholder = "색상을 입력하세요"
             )
             FormTextField(
                 label = "Factory",
-                value = uiState.factoryFieldState.value,
+                value = uiState.factoryField.value,
                 onValueChange = onFactoryChange,
                 placeholder = "공장을 입력하세요"
             )
             FormTextField(
                 label = "Finish",
-                value = uiState.finishFieldState.value,
+                value = uiState.finishField.value,
                 onValueChange = onFinishChange,
                 placeholder = "마감을 입력하세요"
             )
             FormTextField(
                 label = "Remark",
-                value = uiState.remarkFieldState.value,
+                value = uiState.remarkField.value,
                 onValueChange = onRemarkChange,
                 placeholder = "비고를 입력하세요",
                 modifier = Modifier.height(120.dp),

@@ -18,9 +18,9 @@ import trillion.wms.core.domain.SearchFabricRollsStreamUseCase
 import trillion.wms.core.model.FabricRoll
 import trillion.wms.core.ui.model.LengthUnit
 import trillion.wms.core.ui.utils.RefreshableUiResultFlow
+import trillion.wms.core.ui.utils.UiMessageManager
 import trillion.wms.core.ui.utils.cancellableRunCatching
 import trillion.wms.core.ui.utils.combine
-import trillion.wms.feature.zone.detail.ZoneDetailUiState.SideEffect
 
 class ZoneDetailViewModel(
     zoneId: Long,
@@ -29,10 +29,10 @@ class ZoneDetailViewModel(
     private val deleteFabricRoll: DeleteFabricRollUseCase,
 ) : ViewModel() {
 
+    private val uiMessageManager = UiMessageManager()
+
     private val searchQuery = MutableStateFlow("")
     private val lengthUnit = MutableStateFlow(LengthUnit.METER)
-    private val sideEffect = MutableStateFlow<SideEffect?>(null)
-
     private val zone = RefreshableUiResultFlow(
         produce = {
             getZoneStream(Params.ZoneId(zoneId), forceRefresh = true)
@@ -57,7 +57,7 @@ class ZoneDetailViewModel(
         searchQuery,
         lengthUnit,
         isRefreshing,
-        sideEffect,
+        uiMessageManager.message,
         ::ZoneDetailUiState
     ).stateIn(
         viewModelScope,
@@ -81,12 +81,18 @@ class ZoneDetailViewModel(
     fun deleteFabricRoll(fabricRoll: FabricRoll) {
         viewModelScope.launch {
             cancellableRunCatching { deleteFabricRoll(fabricRoll.id) }
-                .onSuccess { sideEffect.emit(SideEffect.ShowSnackbar("롤을 삭제 했습니다.")) }
-                .onFailure { sideEffect.emit(SideEffect.ShowSnackbar("롤을 삭제하지 못했습니다.")) }
+                .fold(
+                    onSuccess = {
+                        uiMessageManager.emitMessage("롤을 삭제 했습니다.")
+                    },
+                    onFailure = {
+                        uiMessageManager.emitMessage("롤을 삭제하지 못했습니다.")
+                    }
+                )
         }
     }
 
-    fun onSideEffectConsumed() {
-        sideEffect.value = null
+    fun clearMessage(id: Long) {
+        uiMessageManager.clearMessage(id)
     }
 }

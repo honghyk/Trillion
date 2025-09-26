@@ -5,19 +5,15 @@ import trillion.wms.core.ui.utils.UiResult
 import trillion.wms.core.model.FabricRoll
 import trillion.wms.core.model.InventorySummary
 import trillion.wms.core.model.Zone
+import trillion.wms.core.ui.utils.UiMessage
 
 
 data class InventoryUiState(
     val inventorySummary: InventorySummaryUiState = InventorySummaryUiState(),
     val search: SearchUiState = SearchUiState(),
     val isRefreshing: Boolean = false,
-    val sideEffect: SideEffect? = null,
-) {
-
-    sealed interface SideEffect {
-        data class ShowSnackbar(val message: String) : SideEffect
-    }
-}
+    val message: UiMessage? = null,
+)
 
 data class InventorySummaryUiState(
     val lengthUnit: LengthUnit = LengthUnit.METER,

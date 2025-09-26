@@ -19,9 +19,8 @@ import trillion.wms.core.model.OutboundHistory
 import trillion.wms.core.model.Zone
 import trillion.wms.core.ui.model.LengthUnit
 import trillion.wms.core.ui.utils.RefreshableUiResultFlow
-import trillion.wms.core.ui.utils.cancellableRunCatching
+import trillion.wms.core.ui.utils.UiMessageManager
 import trillion.wms.core.ui.utils.combine
-import trillion.wms.feature.fabricroll.detail.FabricRollDetailUiState.SideEffect
 
 class FabricRollDetailViewModel(
     rollId: Long,
@@ -31,8 +30,9 @@ class FabricRollDetailViewModel(
     private val deleteOutboundHistory: DeleteOutboundHistoryUseCase,
 ) : ViewModel() {
 
+    private val uiMessageManager = UiMessageManager()
+
     private val lengthUnit: MutableStateFlow<LengthUnit> = MutableStateFlow(LengthUnit.METER)
-    private val sideEffect = MutableStateFlow<SideEffect?>(null)
 
     private val zone = RefreshableUiResultFlow(
         produce = {
@@ -43,7 +43,8 @@ class FabricRollDetailViewModel(
     )
     private val fabricRoll = RefreshableUiResultFlow(
         produce = {
-            getFabricRollStream(rollId, forceRefresh = true).map { requireNotNull(it) }
+            getFabricRollStream(rollId, forceRefresh = true)
+                .map { requireNotNull(it) }
         }
     )
     private val outboundHistories = RefreshableUiResultFlow(
@@ -60,7 +61,7 @@ class FabricRollDetailViewModel(
         outboundHistories.flow,
         lengthUnit,
         isRefreshing,
-        sideEffect,
+        uiMessageManager.message,
         ::FabricRollDetailUiState
     ).stateIn(
         viewModelScope,
@@ -79,13 +80,15 @@ class FabricRollDetailViewModel(
 
     fun deleteOutboundHistory(outboundHistory: OutboundHistory) {
         viewModelScope.launch {
-            cancellableRunCatching { deleteOutboundHistory(outboundHistory.id) }
-                .onSuccess { sideEffect.emit(SideEffect.ShowSnackbar("출고 내역을 삭제 했습니다.")) }
-                .onFailure { sideEffect.emit(SideEffect.ShowSnackbar("출고 내역을 삭제하지 못했습니다.")) }
+            deleteOutboundHistory(outboundHistory.id)
+                .fold(
+                    onSuccess = { uiMessageManager.emitMessage("출고 내역을 삭제 했습니다") },
+                    onFailure = { uiMessageManager.emitMessage("출고 내역을 삭제하지 못했습니다") }
+                )
         }
     }
 
-    fun onSideEffectConsumed() {
-        sideEffect.value = null
+    fun clearMessage(id: Long) {
+        uiMessageManager.clearMessage(id)
     }
 }

@@ -2,27 +2,22 @@ package trillion.wms.feature.outbound
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import trillion.wms.core.ui.utils.cancellableRunCatching
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
-import trillion.wms.core.ui.model.LengthUnit
-import trillion.wms.core.ui.model.Validators
-import trillion.wms.core.ui.utils.formatDecimal
 import trillion.wms.core.domain.GetFabricRollStreamUseCase
 import trillion.wms.core.domain.OutboundFabricRollUseCase
-import trillion.wms.core.model.FabricRoll
 import trillion.wms.core.model.OutboundRequest
+import trillion.wms.core.ui.model.FormSubmitState
+import trillion.wms.core.ui.model.LengthUnit
 
 class OutboundFormViewModel(
     private val rollId: Long,
     private val getFabricRollStreamUseCase: GetFabricRollStreamUseCase,
-    private val outboundFabricRollUseCase: OutboundFabricRollUseCase,
+    private val outboundFabricRoll: OutboundFabricRollUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(OutboundFormUiState())
@@ -30,13 +25,13 @@ class OutboundFormViewModel(
 
     init {
         viewModelScope.launch {
-            combine(
-                getFabricRollStreamUseCase(rollId),
-                _uiState.map { it.lengthUnit }.distinctUntilChanged(),
-                ::Pair
-            ).collect { (fabricRoll, lengthUnit) ->
-                if (fabricRoll != null) {
-                    initUiState(fabricRoll, lengthUnit)
+            getFabricRollStreamUseCase(rollId).first()?.let { fabricRoll ->
+                _uiState.update {
+                    it.copy(
+                        itemNo = fabricRoll.itemNo,
+                        orderNo = fabricRoll.orderNo.ifEmpty { "-" },
+                        availableQtyInMeters = fabricRoll.remainingQuantity,
+                    )
                 }
             }
         }
@@ -45,21 +40,23 @@ class OutboundFormViewModel(
     fun onQtyToProcessChange(value: String) {
         _uiState.update { uiState ->
             uiState.copy(
-                qtyToProcessFieldState = uiState.qtyToProcessFieldState.copy(value = value)
+                quantityToProcess = value
             )
         }
     }
 
     fun onLengthUnitChange(lengthUnit: LengthUnit) {
         _uiState.update { uiState ->
-            uiState.copy(lengthUnit = lengthUnit)
+            uiState.copy(
+                lengthUnit = lengthUnit,
+            )
         }
     }
 
     fun onBuyerChange(value: String) {
         _uiState.update { uiState ->
             uiState.copy(
-                buyerFieldState = uiState.buyerFieldState.copy(value = value)
+                buyerField = uiState.buyerField.copy(value = value)
             )
         }
     }
@@ -67,7 +64,7 @@ class OutboundFormViewModel(
     fun onDateChange(value: String) {
         _uiState.update { uiState ->
             uiState.copy(
-                dateFieldState = uiState.dateFieldState.copy(value = value)
+                dateField = uiState.dateField.copy(value = value)
             )
         }
     }
@@ -75,64 +72,42 @@ class OutboundFormViewModel(
     fun onRemarkChange(value: String) {
         _uiState.update { uiState ->
             uiState.copy(
-                remarkFieldState = uiState.remarkFieldState.copy(value = value)
+                remarkField = uiState.remarkField.copy(value = value)
             )
         }
     }
 
     fun submit() {
+        if (uiState.value.formSubmitState == FormSubmitState.IN_PROGRESS) return
+
         viewModelScope.launch {
-            _uiState.update { it.copy(submitInProgress = true) }
-            cancellableRunCatching { outboundFabricRoll() }
-                .onSuccess { _uiState.update { it.copy(submitInProgress = false) } }
-                .onFailure { _uiState.update { it.copy(submitInProgress = false) } }
+            _uiState.update { it.copy(formSubmitState = FormSubmitState.IN_PROGRESS) }
+
+            val request = buildOutboundRequest()
+            outboundFabricRoll(request)
+                .fold(
+                    onSuccess = { _uiState.update { it.copy(formSubmitState = FormSubmitState.SUBMITTED) } },
+                    onFailure = { _uiState.update { it.copy(formSubmitState = FormSubmitState.IDLE) } }
+                )
         }
     }
 
-    fun onSideEffectConsumed() {
-        _uiState.update {
-            it.copy(sideEffect = null)
-        }
-    }
+    private fun buildOutboundRequest(): OutboundRequest {
+        val currentState = uiState.value
 
-    private suspend fun outboundFabricRoll() {
-        val dateFormat = uiState.value.dateFieldState.format
-        val quantity = uiState.value.qtyToProcessFieldState.value.toDouble()
-        val lengthUnit = uiState.value.lengthUnit
+        val dateFormat = currentState.dateField.format
+        val dateInput = currentState.dateField.value
+        val date = dateFormat.parse(dateInput).atStartOfDayIn(TimeZone.currentSystemDefault())
 
-        val request = OutboundRequest(
+        val lengthUnit = currentState.lengthUnit
+        val quantity = (currentState.qtyToProcessField.value.toDouble()) / lengthUnit.multiplier
+
+        return OutboundRequest(
             rollId = rollId,
-            qtyToProcess = quantity / lengthUnit.multiplier,
-            buyer = uiState.value.buyerFieldState.value,
-            date = dateFormat
-                .parse(uiState.value.dateFieldState.value)
-                .atStartOfDayIn(TimeZone.currentSystemDefault()),
-            remark = uiState.value.remarkFieldState.value,
+            qtyToProcess = quantity,
+            date = date,
+            buyer = currentState.buyerField.value,
+            remark = currentState.remarkField.value,
         )
-        outboundFabricRollUseCase(request)
-    }
-
-    private fun initUiState(
-        fabricRoll: FabricRoll,
-        lengthUnit: LengthUnit,
-    ) {
-        _uiState.update { uiState ->
-            uiState.copy(
-                itemNoFieldState = uiState.itemNoFieldState.copy(value = fabricRoll.itemNo),
-                orderNoFieldState = uiState.orderNoFieldState.copy(
-                    value = fabricRoll.orderNo.ifEmpty { "-" }
-                ),
-                availableQtyFieldState = uiState.availableQtyFieldState.copy(
-                    value = (fabricRoll.remainingQuantity * lengthUnit.multiplier).formatDecimal(1)
-                ),
-                qtyToProcessFieldState = uiState.qtyToProcessFieldState.copy(
-                    value = "",
-                    validators = listOf(
-                        Validators.isPositiveNumber(),
-                        Validators.isInRange(max = fabricRoll.remainingQuantity / lengthUnit.multiplier)
-                    )
-                ),
-            )
-        }
     }
 }

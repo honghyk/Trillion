@@ -4,14 +4,17 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.LastBaseline
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import trillion.wms.core.ui.model.LengthUnit
 import trillion.wms.core.ui.model.NumberFieldState
 import trillion.wms.core.designsystem.component.FormNumberTextField
+import trillion.wms.core.designsystem.theme.SdsTheme
 
 @Composable
 fun QuantityFormField(
@@ -38,11 +41,10 @@ fun QuantityFormField(
                 }
             },
             onValueChange = onValueChange,
-            modifier = Modifier.weight(1f).alignBy(LastBaseline),
+            modifier = Modifier.weight(1f),
         )
         LengthUnitToggleButtons(
-            modifier = Modifier
-                .alignByBaseline(),
+            modifier = Modifier.padding(top = 44.5.dp),
             selected = lengthUnit,
             onSelected = onLengthUnitSelected,
         )

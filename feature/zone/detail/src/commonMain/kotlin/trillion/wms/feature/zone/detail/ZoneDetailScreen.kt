@@ -21,6 +21,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -54,51 +55,37 @@ import trillion.wms.core.model.FabricRoll
 import trillion.wms.core.model.Zone
 import trillion.wms.core.ui.component.RefreshableContent
 import trillion.wms.core.ui.compositionlocal.safeDrawingWithBottomNavBar
-import trillion.wms.core.ui.utils.UiSideEffectHandler
 
 @Composable
 fun ZoneDetailScreen(
     zoneId: Long,
     onBackClick: () -> Unit,
     onAddFabricRollClick: (zoneId: Long) -> Unit,
-    onEditFabricRollClick: (zoneId: Long, rollId: Long) -> Unit,
+    onEditFabricRollClick: (rollId: Long) -> Unit,
     onOutboundFabricRollClick: (rollId: Long) -> Unit,
     onFabricRollTableItemClick: (rollId: Long) -> Unit,
     viewModel: ZoneDetailViewModel = koinViewModel { parametersOf(zoneId) },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
     ZoneDetailScreen(
         uiState = uiState,
-        snackbarHostState = snackbarHostState,
         onBackClick = onBackClick,
         onRefresh = viewModel::refresh,
         onSearchQueryChange = viewModel::updateSearchQuery,
         onLengthUnitSelect = viewModel::updateLengthUnit,
         onFabricRollTableItemClick = { roll -> onFabricRollTableItemClick(roll.id) },
         onAddFabricRollClick = onAddFabricRollClick,
-        onEditFabricRollClick = { roll -> onEditFabricRollClick(roll.zoneId, roll.id) },
+        onEditFabricRollClick = { roll -> onEditFabricRollClick(roll.id) },
         onOutboundFabricRollClick = { roll -> onOutboundFabricRollClick(roll.id) },
         onDeleteFabricRollClick = viewModel::deleteFabricRoll,
+        onMessageShown = viewModel::clearMessage,
     )
-
-    UiSideEffectHandler(
-        effect = uiState.sideEffect,
-        onConsumed = viewModel::onSideEffectConsumed,
-    ) {
-        when (it) {
-            is ZoneDetailUiState.SideEffect.ShowSnackbar -> {
-                snackbarHostState.showSnackbar(it.message)
-            }
-        }
-    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ZoneDetailScreen(
     uiState: ZoneDetailUiState,
-    snackbarHostState: SnackbarHostState,
     onBackClick: () -> Unit,
     onRefresh: () -> Unit,
     onSearchQueryChange: (String) -> Unit,
@@ -108,12 +95,21 @@ private fun ZoneDetailScreen(
     onEditFabricRollClick: (FabricRoll) -> Unit,
     onOutboundFabricRollClick: (FabricRoll) -> Unit,
     onDeleteFabricRollClick: (FabricRoll) -> Unit,
+    onMessageShown: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
+    if (uiState.message != null) {
+        LaunchedEffect(uiState.message) {
+            snackbarHostState.showSnackbar(uiState.message.message)
+            onMessageShown(uiState.message.id)
+        }
+    }
+
     SdsScaffold(
         modifier = modifier,
         topBar = {
-            TopAppBar(
+            ZoneDetailAppBar(
                 isRefreshing = uiState.isRefreshing,
                 onBackClick = onBackClick,
                 onRefresh = onRefresh,
@@ -123,7 +119,7 @@ private fun ZoneDetailScreen(
         contentWindowInsets = WindowInsets.safeDrawingWithBottomNavBar
             .exclude(WindowInsets.ime),
     ) { contentPadding ->
-        Box(modifier = Modifier.padding(contentPadding)) {
+        Box(modifier = Modifier.fillMaxSize().padding(contentPadding)) {
             when (uiState.zone) {
                 is UiResult.Loading -> LoadingContent()
                 is UiResult.Error -> ErrorContent(onRetryClick = onRefresh)
@@ -159,7 +155,7 @@ private fun ZoneDetailScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TopAppBar(
+private fun ZoneDetailAppBar(
     isRefreshing: Boolean,
     onBackClick: () -> Unit,
     onRefresh: () -> Unit,

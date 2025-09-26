@@ -19,8 +19,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,7 +46,6 @@ import trillion.wms.core.ui.component.RefreshableContent
 import trillion.wms.core.ui.component.UiResultContent
 import trillion.wms.core.ui.compositionlocal.safeDrawingWithBottomNavBar
 import trillion.wms.core.ui.utils.InstantFormatter
-import trillion.wms.core.ui.utils.UiSideEffectHandler
 
 @Composable
 fun ZoneListScreen(
@@ -55,43 +54,40 @@ fun ZoneListScreen(
     viewModel: ZoneListViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
+
     ZoneListScreen(
         uiState = uiState,
-        snackbarHostState = snackbarHostState,
         onZoneClick = { onZoneItemClick(it.id) },
         onCreateZoneClick = onAddZoneClick,
         onDeleteClick = viewModel::deleteZone,
         onRefresh = viewModel::refresh,
+        onMessageShown = viewModel::clearMessage,
     )
-
-    UiSideEffectHandler(
-        effect = uiState.sideEffect,
-        onConsumed = viewModel::onSideEffectConsumed,
-    ) {
-        when (it) {
-            is ZoneListUiState.SideEffect.ShowSnackbar -> {
-                snackbarHostState.showSnackbar(it.message)
-            }
-        }
-    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ZoneListScreen(
     uiState: ZoneListUiState,
-    snackbarHostState: SnackbarHostState,
     onZoneClick: (Zone) -> Unit,
     onCreateZoneClick: () -> Unit,
     onDeleteClick: (Zone) -> Unit,
     onRefresh: () -> Unit,
+    onMessageShown: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
+    if (uiState.message != null) {
+        LaunchedEffect(uiState.message) {
+            snackbarHostState.showSnackbar(uiState.message.message)
+            onMessageShown(uiState.message.id)
+        }
+    }
+
     SdsScaffold(
         modifier = modifier,
         topBar = {
-            TopAppBar(
+            ZoneListAppBar(
                 isRefreshing = uiState.isRefreshing,
                 onCreateZoneClick = onCreateZoneClick,
                 onRefresh = onRefresh,
@@ -100,11 +96,7 @@ private fun ZoneListScreen(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         contentWindowInsets = WindowInsets.safeDrawingWithBottomNavBar,
     ) { contentPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(contentPadding)
-        ) {
+        Box(modifier = Modifier.fillMaxSize().padding(contentPadding)) {
             UiResultContent(
                 uiResult = uiState.zones,
                 isRefreshing = uiState.isRefreshing,
@@ -115,18 +107,16 @@ private fun ZoneListScreen(
                     onRefresh = onRefresh,
                 ) {
                     when {
-                        zones.isEmpty() -> {
-                            EmptyContent(onCreateZoneClick = onCreateZoneClick)
-                        }
+                        zones.isEmpty() -> EmptyContent(
+                            onCreateZoneClick = onCreateZoneClick
+                        )
 
-                        else -> {
-                            ZoneListContent(
-                                zones = zones,
-                                onZoneClick = onZoneClick,
-                                onDeleteClick = onDeleteClick,
-                                modifier = Modifier.padding(horizontal = 16.dp),
-                            )
-                        }
+                        else -> ZoneListContent(
+                            zones = zones,
+                            onZoneClick = onZoneClick,
+                            onDeleteClick = onDeleteClick,
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                        )
                     }
                 }
             }
@@ -136,7 +126,7 @@ private fun ZoneListScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TopAppBar(
+private fun ZoneListAppBar(
     isRefreshing: Boolean,
     onCreateZoneClick: () -> Unit,
     onRefresh: () -> Unit,

@@ -9,7 +9,7 @@ import trillion.wms.feature.fabricroll.detail.FabricRollDetailScreen
 fun NavGraphBuilder.fabricRollDetailDestination(
     onBackClick: () -> Unit,
     onOutboundFabricRollClick: (Long) -> Unit,
-    onEditFabricRollClick: (Long, Long) -> Unit,
+    onEditFabricRollClick: (Long) -> Unit,
 ) {
     composable<FabricRollDetail> { backStackEntry ->
         val args = backStackEntry.toRoute<FabricRollDetail>()

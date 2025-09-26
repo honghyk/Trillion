@@ -1,5 +1,7 @@
 package trillion.wms.app.shared.destination
 
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.dialog
@@ -17,7 +19,7 @@ fun NavGraphBuilder.zoneDestinations(
     onZoneItemClick: (Long) -> Unit,
     onAddZoneClick: () -> Unit,
     onAddFabricRollClick: (Long) -> Unit,
-    onEditFabricRollClick: (Long, Long) -> Unit,
+    onEditFabricRollClick: (Long) -> Unit,
     onOutboundFabricRollClick: (Long) -> Unit,
     onFabricRollTableItemClick: (Long) -> Unit,
 ) {
@@ -54,7 +56,7 @@ fun NavGraphBuilder.zoneListDestination(
 fun NavGraphBuilder.zoneDetailDestination(
     onBackClick: () -> Unit,
     onAddFabricRollClick: (Long) -> Unit,
-    onEditFabricRollClick: (Long, Long) -> Unit,
+    onEditFabricRollClick: (Long) -> Unit,
     onOutboundFabricRollClick: (Long) -> Unit,
     onFabricRollTableItemClick: (Long) -> Unit,
 ) {

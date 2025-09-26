@@ -1,32 +1,43 @@
 package trillion.wms.feature.outbound
 
 import trillion.wms.core.ui.model.DateFieldState
+import trillion.wms.core.ui.model.FormFieldState
+import trillion.wms.core.ui.model.FormSubmitState
 import trillion.wms.core.ui.model.LengthUnit
 import trillion.wms.core.ui.model.NumberFieldState
 import trillion.wms.core.ui.model.TextFormFieldState
+import trillion.wms.core.ui.model.Validator
+import trillion.wms.core.ui.model.Validators
 import trillion.wms.core.ui.utils.InstantFormatter
+import trillion.wms.core.ui.utils.formatDecimal
 import kotlin.time.Clock
 
 data class OutboundFormUiState(
-    val itemNoFieldState: TextFormFieldState = TextFormFieldState(value = ""),
-    val orderNoFieldState: TextFormFieldState = TextFormFieldState(value = ""),
-    val availableQtyFieldState: TextFormFieldState = TextFormFieldState(value = ""),
-    val qtyToProcessFieldState: NumberFieldState = NumberFieldState(value = ""),
-    val buyerFieldState: TextFormFieldState = TextFormFieldState(value = ""),
-    val dateFieldState: DateFieldState = DateFieldState(
+    val itemNo: String = "",
+    val orderNo: String = "",
+    val availableQtyInMeters: Double = 0.0,
+    val lengthUnit: LengthUnit = LengthUnit.METER,
+    val quantityToProcess: String = "",
+    val buyerField: TextFormFieldState = TextFormFieldState(value = ""),
+    val dateField: DateFieldState = DateFieldState(
         value = InstantFormatter.formatBasicDate(Clock.System.now())
     ),
-    val remarkFieldState: TextFormFieldState = TextFormFieldState(value = ""),
-    val lengthUnit: LengthUnit = LengthUnit.METER,
-    val submitInProgress: Boolean = false,
-    val sideEffect: SideEffect? = null,
+    val remarkField: TextFormFieldState = TextFormFieldState(value = ""),
+    val formSubmitState: FormSubmitState = FormSubmitState.IDLE,
 ) {
-    val submitEnabled: Boolean
-        get() = qtyToProcessFieldState.value.isNotEmpty()
-                && !qtyToProcessFieldState.isError
-                && buyerFieldState.value.isNotEmpty()
 
-    sealed interface SideEffect {
-        data object Dismiss : SideEffect
-    }
+    val qtyToProcessField: NumberFieldState = NumberFieldState(
+        value = quantityToProcess,
+        validators = listOf(
+            Validators.isPositiveNumber(),
+            Validators.isInRange(max = availableQtyInMeters * lengthUnit.multiplier)
+        )
+    )
+
+    val availableQtyInCurrentUnit: Double
+        get() = availableQtyInMeters * lengthUnit.multiplier
+
+    val submitEnabled: Boolean
+        get() = qtyToProcessField.value.isNotEmpty() && !qtyToProcessField.isError
+                && buyerField.value.isNotEmpty()
 }

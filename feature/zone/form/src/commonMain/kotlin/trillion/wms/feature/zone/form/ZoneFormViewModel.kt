@@ -10,6 +10,7 @@ import kotlinx.coroutines.launch
 import trillion.wms.core.domain.CreateZoneUseCase
 import trillion.wms.core.model.CreateZoneRequest
 import trillion.wms.core.model.exception.AlreadyExistsException
+import trillion.wms.core.ui.model.FormSubmitState
 import trillion.wms.core.ui.utils.cancellableRunCatching
 
 class ZoneFormViewModel(
@@ -22,7 +23,7 @@ class ZoneFormViewModel(
     fun updateNameField(value: String) {
         _uiState.update { uiState ->
             uiState.copy(
-                nameFieldState = uiState.nameFieldState.copy(
+                nameField = uiState.nameField.copy(
                     value = value,
                     serverErrorMessage = null
                 ),
@@ -33,49 +34,50 @@ class ZoneFormViewModel(
     fun updateDescriptionField(value: String) {
         _uiState.update { uiState ->
             uiState.copy(
-                descriptionFieldState = uiState.descriptionFieldState.copy(value = value)
+                descriptionField = uiState.descriptionField.copy(value = value)
             )
         }
     }
 
     fun submit() {
+        val currentState = _uiState.value
+        if (currentState.formSubmitState == FormSubmitState.IN_PROGRESS) {
+            return
+        }
         viewModelScope.launch {
-            _uiState.update { uiState -> uiState.copy(submitInProgress = true) }
-            createZone()
-                .onSuccess {
-                    _uiState.update { uiState ->
-                        uiState.copy(
-                            submitInProgress = false,
-                            sideEffect = ZoneFormUiState.SideEffect.Dismiss,
-                        )
-                    }
-                }
-                .onFailure { e ->
-                    _uiState.update { uiState ->
-                        uiState.copy(
-                            nameFieldState = uiState.nameFieldState.copy(
-                                serverErrorMessage = when (e) {
-                                    is AlreadyExistsException -> "같은 이름 구역이 존재합니다"
-                                    else -> null
-                                }
-                            ),
-                            submitInProgress = false,
-                        )
-                    }
-                }
+            _uiState.update { it.copy(formSubmitState = FormSubmitState.IN_PROGRESS) }
+
+            val request = CreateZoneRequest(
+                name = currentState.nameField.value,
+                description = currentState.descriptionField.value,
+            )
+            createZoneUseCase(request)
+                .fold(
+                    onSuccess = { handleSuccessfulSubmit() },
+                    onFailure = { e -> handleSubmitFailure(e) }
+                )
         }
     }
 
-    fun onSideEffectConsumed() {
-        _uiState.update { uiState -> uiState.copy(sideEffect = null) }
+    private fun handleSuccessfulSubmit() {
+        _uiState.update { uiState ->
+            uiState.copy(formSubmitState = FormSubmitState.SUBMITTED)
+        }
     }
 
-    private suspend fun createZone(): Result<Unit> = cancellableRunCatching {
-        createZoneUseCase(
-            request = CreateZoneRequest(
-                name = uiState.value.nameFieldState.value,
-                description = uiState.value.descriptionFieldState.value,
+    private fun handleSubmitFailure(e: Throwable) {
+        _uiState.update { uiState ->
+            uiState.copy(
+                nameField = uiState.nameField.copy(serverErrorMessage = e.getErrorMessage()),
+                formSubmitState = FormSubmitState.IDLE
             )
-        )
+        }
+    }
+
+    private fun Throwable.getErrorMessage(): String? {
+        return when (this) {
+            is AlreadyExistsException -> "같은 이름 구역이 존재합니다"
+            else -> null
+        }
     }
 }
