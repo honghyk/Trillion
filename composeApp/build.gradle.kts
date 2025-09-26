@@ -17,7 +17,6 @@ kotlin {
         }
 
         commonMain.dependencies {
-            implementation(projects.feature)
             implementation(projects.appShared)
             implementation(projects.core.designsystem)
             implementation(projects.core.model)

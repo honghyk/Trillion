@@ -33,14 +33,27 @@ plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 
-include(":composeApp")
-include(":core:database")
-include(":core:model")
-include(":core:data")
-include(":core:domain")
-include(":core:designsystem")
-include(":core:network")
-include(":core:ui")
+include(
+    ":composeApp",
+    ":app-shared"
+)
 
-include(":feature")
-include(":app-shared")
+include(
+    ":feature:zone:list",
+    ":feature:zone:detail",
+    ":feature:zone:form",
+    ":feature:inventory",
+    ":feature:fabricroll:detail",
+    ":feature:fabricroll:form",
+    ":feature:outbound",
+)
+
+include(
+    ":core:database",
+    ":core:model",
+    ":core:data",
+    ":core:domain",
+    ":core:designsystem",
+    ":core:network",
+    ":core:ui",
+)

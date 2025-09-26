@@ -103,5 +103,4 @@ trillion-wms-androidApplication = { id = "trillion.wms.androidApplication" }
 trillion-wms-androidLibrary = { id = "trillion.wms.androidLibrary" }
 trillion-wms-koin = { id = "trillion.wms.koin" }
 trillion-wms-composeMultiplatform = { id = "trillion.wms.composeMultiplatform" }
-android-kotlin-multiplatform-library = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
-android-lint = { id = "com.android.lint", version.ref = "agp" }
+trillion-wms-feature = { id = "trillion.wms.feature" }

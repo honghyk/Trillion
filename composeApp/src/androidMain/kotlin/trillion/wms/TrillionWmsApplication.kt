@@ -3,7 +3,7 @@ package trillion.wms
 import android.app.Application
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
-import trillion.wms.di.initKoin
+import trillion.wms.app.shared.di.initKoin
 
 class TrillionWmsApplication : Application() {
 

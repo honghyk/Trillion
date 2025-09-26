@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.trillion.wms.androidLibrary)
     alias(libs.plugins.trillion.wms.kotlinMultiplatform)
     alias(libs.plugins.trillion.wms.composeMultiplatform)
+    alias(libs.plugins.trillion.wms.koin)
 }
 
 android {
@@ -15,7 +16,13 @@ kotlin {
             implementation(projects.core.designsystem)
             implementation(projects.core.ui)
             implementation(projects.core.model)
-            implementation(projects.feature)
+            implementation(projects.feature.zone.list)
+            implementation(projects.feature.zone.detail)
+            implementation(projects.feature.zone.form)
+            implementation(projects.feature.inventory)
+            implementation(projects.feature.fabricroll.detail)
+            implementation(projects.feature.fabricroll.form)
+            implementation(projects.feature.outbound)
 
             implementation(libs.navgation.compose)
             implementation(libs.kotlinx.serialization)

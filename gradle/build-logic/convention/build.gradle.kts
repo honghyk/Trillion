@@ -30,5 +30,9 @@ gradlePlugin {
             id = "trillion.wms.composeMultiplatform"
             implementationClass = "ComposeMultiplatformConventionPlugin"
         }
+        register("feature") {
+            id = "trillion.wms.feature"
+            implementationClass = "FeatureConventionPlugin"
+        }
     }
 }
