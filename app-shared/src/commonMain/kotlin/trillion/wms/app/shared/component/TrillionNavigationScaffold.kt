@@ -15,6 +15,7 @@ import androidx.window.core.layout.WindowWidthSizeClass
 import trillion.wms.core.designsystem.component.SdsDrawerDefaults
 import trillion.wms.core.designsystem.component.SdsNavigationBarDefaults
 import trillion.wms.core.designsystem.component.SdsNavigationRailDefaults
+import trillion.wms.core.designsystem.component.SdsScaffold
 import trillion.wms.core.ui.compositionlocal.LocalBottomNavigationBarsPadding
 
 enum class NavigationBarType { NavigationDrawer, NavigationRail, BottomNavigation }
@@ -77,7 +78,7 @@ private fun TrillionNavigationScaffold(
 
             NavigationBarType.BottomNavigation -> Unit
         }
-        Scaffold(
+        SdsScaffold(
             bottomBar = {
                 if (navigationBarType == NavigationBarType.BottomNavigation) {
                     TrillionNavigationBar(
