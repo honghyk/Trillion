@@ -8,10 +8,10 @@ class GetZoneStreamUseCase(
     private val zonesRepository: ZonesRepository,
 ) {
 
-    operator fun invoke(params: Params, forceRefresh: Boolean = false): Flow<Zone?> {
+    operator fun invoke(params: Params): Flow<Zone?> {
         return when (params) {
-            is Params.ZoneId -> zonesRepository.getZoneStream(params.id, forceRefresh)
-            is Params.RollId -> zonesRepository.getZoneByRollIdStream(params.id, forceRefresh)
+            is Params.ZoneId -> zonesRepository.getZoneStream(params.id)
+            is Params.RollId -> zonesRepository.getZoneByRollIdStream(params.id)
         }
     }
 

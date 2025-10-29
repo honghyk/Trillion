@@ -1,5 +1,6 @@
 package trillion.wms.core.data.repository.fake
 
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterNotNull
@@ -22,19 +23,19 @@ class InMemoryZonesRepository(
     private var lastGeneratedId: Long = 1L
     private val zones = MutableStateFlow(initialDataSet())
 
-    override fun getZoneStream(id: Long, refresh: Boolean): Flow<Zone?> {
+    override fun getZoneStream(id: Long): Flow<Zone?> {
         return zones
             .map { it.firstOrNull { zone -> zone.id == id } }
             .mapLatest { zone -> zone?.let { injectZoneStats(it) } }
     }
 
-    override fun getZoneByRollIdStream(rollId: Long, refresh: Boolean): Flow<Zone?> {
+    override fun getZoneByRollIdStream(rollId: Long): Flow<Zone?> {
         return fabricRollsRepository.getFabricRoll(rollId)
             .filterNotNull()
             .flatMapLatest { roll -> getZoneStream(roll.zoneId) }
     }
 
-    override fun getZonesStream(refresh: Boolean): Flow<List<Zone>> {
+    override fun getZonesStream(): Flow<List<Zone>> {
         return zones.mapLatest { zones ->
             zones.map { zone -> injectZoneStats(zone) }
         }
@@ -69,6 +70,14 @@ class InMemoryZonesRepository(
         zones.update { curr ->
             curr.filter { it.id != id }
         }
+    }
+
+    override suspend fun refresh(id: Long) {
+        delay(500L)
+    }
+
+    override suspend fun refreshAll() {
+        delay(500L)
     }
 
     private fun CreateZoneRequest.buildZone(): Zone {

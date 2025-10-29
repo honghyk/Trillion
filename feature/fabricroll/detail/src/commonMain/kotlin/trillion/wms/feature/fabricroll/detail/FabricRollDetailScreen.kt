@@ -188,7 +188,7 @@ private fun FabricRollDetailAppBar(
 
 @Composable
 private fun FabricRollDetailContent(
-    zone: UiResult<Zone>,
+    zone: Zone,
     fabricRoll: FabricRoll,
     lengthUnit: LengthUnit,
     outboundHistories: UiResult<List<OutboundHistory>>,
@@ -206,7 +206,7 @@ private fun FabricRollDetailContent(
             verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
             FabricRollDetailHeader(
-                zoneName = (zone as? UiResult.Success)?.data?.name ?: "-",
+                zoneName = zone.name,
                 itemNo = fabricRoll.itemNo,
                 orderNo = fabricRoll.orderNo,
             )

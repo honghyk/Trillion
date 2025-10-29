@@ -23,7 +23,6 @@ import trillion.wms.core.model.Zone
 import trillion.wms.core.model.exception.AlreadyExistsException
 import trillion.wms.core.ui.model.FormSubmitState
 import trillion.wms.core.ui.model.LengthUnit
-import trillion.wms.core.ui.utils.cancellableRunCatching
 import trillion.wms.core.ui.utils.formatDecimal
 
 class FabricRollFormViewModel(

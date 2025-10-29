@@ -34,13 +34,9 @@ class FabricRollDetailViewModel(
 
     private val lengthUnit: MutableStateFlow<LengthUnit> = MutableStateFlow(LengthUnit.METER)
 
-    private val zone = RefreshableUiResultFlow(
-        produce = {
-            getZoneStream(Params.RollId(rollId))
-                .map { requireNotNull(it) }
-                .catch { emit(Zone.EMPTY) }
-        }
-    )
+    private val zone = getZoneStream(Params.RollId(rollId))
+        .map { it ?: Zone.EMPTY }
+
     private val fabricRoll = RefreshableUiResultFlow(
         produce = {
             getFabricRollStream(rollId, forceRefresh = true)
@@ -56,7 +52,7 @@ class FabricRollDetailViewModel(
     ) { refreshingStates -> refreshingStates.any { it } }
 
     val uiState: StateFlow<FabricRollDetailUiState> = combine(
-        zone.flow,
+        zone,
         fabricRoll.flow,
         outboundHistories.flow,
         lengthUnit,

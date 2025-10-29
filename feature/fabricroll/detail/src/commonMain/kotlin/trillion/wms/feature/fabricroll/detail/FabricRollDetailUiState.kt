@@ -8,7 +8,7 @@ import trillion.wms.core.model.Zone
 import trillion.wms.core.ui.utils.UiMessage
 
 data class FabricRollDetailUiState(
-    val zone: UiResult<Zone> = UiResult.Loading,
+    val zone: Zone = Zone.EMPTY,
     val fabricRoll: UiResult<FabricRoll> = UiResult.Loading,
     val outboundHistories: UiResult<List<OutboundHistory>> = UiResult.Loading,
     val lengthUnit: LengthUnit = LengthUnit.METER,

@@ -70,7 +70,7 @@ fun ZoneDetailScreen(
     ZoneDetailScreen(
         uiState = uiState,
         onBackClick = onBackClick,
-        onRefresh = viewModel::refresh,
+        onRefresh = { viewModel.refresh(true) },
         onSearchQueryChange = viewModel::updateSearchQuery,
         onLengthUnitSelect = viewModel::updateLengthUnit,
         onFabricRollTableItemClick = { roll -> onFabricRollTableItemClick(roll.id) },

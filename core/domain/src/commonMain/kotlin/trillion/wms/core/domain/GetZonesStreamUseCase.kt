@@ -8,7 +8,7 @@ class GetZonesStreamUseCase(
     private val zonesRepository: ZonesRepository
 ) {
 
-    operator fun invoke(forceRefresh: Boolean = false): Flow<List<Zone>> {
-        return zonesRepository.getZonesStream(forceRefresh)
+    operator fun invoke(): Flow<List<Zone>> {
+        return zonesRepository.getZonesStream()
     }
 }

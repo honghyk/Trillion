@@ -60,7 +60,7 @@ fun ZoneListScreen(
         onZoneClick = { onZoneItemClick(it.id) },
         onCreateZoneClick = onAddZoneClick,
         onDeleteClick = viewModel::deleteZone,
-        onRefresh = viewModel::refresh,
+        onRefresh = { viewModel.refresh(true) },
         onMessageShown = viewModel::clearMessage,
     )
 }

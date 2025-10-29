@@ -22,4 +22,6 @@ val usecaseModule = module {
     factoryOf(::SearchFabricRollsStreamUseCase)
     factoryOf(::GetInventoryOverviewStreamUseCase)
     factoryOf(::UpdateFabricRollUseCase)
+    factoryOf(::RefreshZonesUseCase)
+    factoryOf(::RefreshZoneUseCase)
 }

@@ -7,27 +7,27 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import trillion.wms.core.ui.utils.RefreshableUiResultFlow
-import trillion.wms.core.ui.utils.cancellableRunCatching
 import trillion.wms.core.domain.DeleteZoneUseCase
 import trillion.wms.core.domain.GetZonesStreamUseCase
+import trillion.wms.core.domain.RefreshZonesUseCase
 import trillion.wms.core.model.Zone
 import trillion.wms.core.ui.utils.UiMessageManager
+import trillion.wms.core.ui.utils.asUiResult
 
 class ZoneListViewModel(
     getZonesStream: GetZonesStreamUseCase,
+    private val refreshZones: RefreshZonesUseCase,
     private val deleteZone: DeleteZoneUseCase,
 ) : ViewModel() {
 
     private val uiMessageManager = UiMessageManager()
 
-    private val zones = RefreshableUiResultFlow(
-        produce = { getZonesStream(forceRefresh = true) }
-    )
+    private val zones = getZonesStream().asUiResult()
+    private val isRefreshing = refreshZones.inProgress
 
     val uiState: StateFlow<ZoneListUiState> = combine(
-        zones.flow,
-        zones.isRefreshing,
+        zones,
+        isRefreshing,
         uiMessageManager.message,
         ::ZoneListUiState
     ).stateIn(
@@ -36,18 +36,24 @@ class ZoneListViewModel(
         ZoneListUiState()
     )
 
+    init {
+        refresh(false)
+    }
+
     fun deleteZone(zone: Zone) {
         viewModelScope.launch {
             deleteZone(zone.id)
                 .fold(
-                    onSuccess = { uiMessageManager.emitMessage("${zone.name}} 구역을 삭제 했습니다") },
+                    onSuccess = { uiMessageManager.emitMessage("${zone.name} 구역을 삭제 했습니다") },
                     onFailure = { uiMessageManager.emitMessage("구역을 삭제하지 못했습니다.") }
                 )
         }
     }
 
-    fun refresh() {
-        zones.refresh()
+    fun refresh(fromUser: Boolean) {
+        viewModelScope.launch {
+            refreshZones(RefreshZonesUseCase.Params(isUserInitiated = fromUser))
+        }
     }
 
     fun clearMessage(id: Long) {

@@ -15,18 +15,22 @@ import kotlinx.coroutines.launch
 import trillion.wms.core.domain.DeleteFabricRollUseCase
 import trillion.wms.core.domain.GetZoneStreamUseCase
 import trillion.wms.core.domain.GetZoneStreamUseCase.Params
+import trillion.wms.core.domain.RefreshZoneUseCase
+import trillion.wms.core.domain.RefreshZonesUseCase
 import trillion.wms.core.domain.SearchFabricRollsStreamUseCase
 import trillion.wms.core.model.FabricRoll
 import trillion.wms.core.ui.model.LengthUnit
 import trillion.wms.core.ui.utils.RefreshableUiResultFlow
 import trillion.wms.core.ui.utils.UiMessageManager
+import trillion.wms.core.ui.utils.asUiResult
 import trillion.wms.core.ui.utils.cancellableRunCatching
 import trillion.wms.core.ui.utils.combine
 
 class ZoneDetailViewModel(
-    zoneId: Long,
     getZoneStream: GetZoneStreamUseCase,
     searchFabricRollsStream: SearchFabricRollsStreamUseCase,
+    private val zoneId: Long,
+    private val refreshZone: RefreshZoneUseCase,
     private val deleteFabricRoll: DeleteFabricRollUseCase,
 ) : ViewModel() {
 
@@ -34,12 +38,10 @@ class ZoneDetailViewModel(
 
     private val searchQuery = MutableStateFlow("")
     private val lengthUnit = MutableStateFlow(LengthUnit.METER)
-    private val zone = RefreshableUiResultFlow(
-        produce = {
-            getZoneStream(Params.ZoneId(zoneId), forceRefresh = true)
-                .map { requireNotNull(it) }
-        }
-    )
+    private val zone = getZoneStream(Params.ZoneId(zoneId))
+        .map { requireNotNull(it) }
+        .asUiResult()
+
     private val fabricRolls = RefreshableUiResultFlow(
         produce = {
             searchQuery
@@ -48,12 +50,12 @@ class ZoneDetailViewModel(
         }
     )
     private val isRefreshing = combine(
-        zone.isRefreshing,
+        refreshZone.inProgress,
         fabricRolls.isRefreshing,
     ) { refreshingStates -> refreshingStates.any { it } }
 
     val uiState: StateFlow<ZoneDetailUiState> = combine(
-        zone.flow,
+        zone,
         fabricRolls.flow,
         searchQuery,
         lengthUnit,
@@ -66,8 +68,14 @@ class ZoneDetailViewModel(
         ZoneDetailUiState()
     )
 
-    fun refresh() {
-        zone.refresh()
+    init {
+        refresh(false)
+    }
+
+    fun refresh(fromUser: Boolean) {
+        viewModelScope.launch {
+            refreshZone(RefreshZoneUseCase.Params(zoneId, isUserInitiated = fromUser))
+        }
         fabricRolls.refresh()
     }
 
@@ -83,12 +91,8 @@ class ZoneDetailViewModel(
         viewModelScope.launch {
             cancellableRunCatching { deleteFabricRoll(fabricRoll.id) }
                 .fold(
-                    onSuccess = {
-                        uiMessageManager.emitMessage("롤을 삭제 했습니다.")
-                    },
-                    onFailure = {
-                        uiMessageManager.emitMessage("롤을 삭제하지 못했습니다.")
-                    }
+                    onSuccess = { uiMessageManager.emitMessage("롤을 삭제 했습니다.") },
+                    onFailure = { uiMessageManager.emitMessage("롤을 삭제하지 못했습니다.") }
                 )
         }
     }

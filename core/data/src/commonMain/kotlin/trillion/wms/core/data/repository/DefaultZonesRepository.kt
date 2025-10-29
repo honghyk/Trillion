@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import org.mobilenativefoundation.store.store5.StoreReadRequest
 import org.mobilenativefoundation.store.store5.StoreReadResponse
+import org.mobilenativefoundation.store.store5.impl.extensions.fresh
 import trillion.wms.core.data.repository.api.ZonesRepository
 import trillion.wms.core.data.repository.store.AllZonesStore
 import trillion.wms.core.data.repository.store.ZoneStore
@@ -26,31 +27,30 @@ internal class DefaultZonesRepository(
     private val allZonesStore: AllZonesStore,
 ) : ZonesRepository {
 
-    override fun getZoneStream(id: Long, refresh: Boolean): Flow<Zone?> {
+    override fun getZoneStream(id: Long): Flow<Zone?> {
         return zoneStore
-            .stream(StoreReadRequest.cached(id, refresh))
+            .stream(StoreReadRequest.cached(id, refresh = false))
             .filter { it is StoreReadResponse.Data }
             .map { response -> response.dataOrNull() }
             .distinctUntilChanged()
     }
 
-    override fun getZoneByRollIdStream(rollId: Long, refresh: Boolean): Flow<Zone?> {
+    override fun getZoneByRollIdStream(rollId: Long): Flow<Zone?> {
         return fabricRollLocalDataSource.getFabricRollStream(rollId)
             .flatMapLatest { fabricRoll ->
                 if (fabricRoll == null) {
                     flowOf(null)
                 } else {
-                    getZoneStream(fabricRoll.zoneId, refresh)
+                    getZoneStream(fabricRoll.zoneId)
                 }
             }
     }
 
-    override fun getZonesStream(refresh: Boolean): Flow<List<Zone>> {
+    override fun getZonesStream(): Flow<List<Zone>> {
         return allZonesStore
-            .stream(StoreReadRequest.cached(Unit, refresh))
+            .stream(StoreReadRequest.cached(Unit, refresh = false))
             .filter { it is StoreReadResponse.Data }
-            .map { response -> response.dataOrNull() ?: emptyList() }
-            .distinctUntilChanged()
+            .map { it.requireData() }
     }
 
     override suspend fun createZone(request: CreateZoneRequest) {
@@ -66,5 +66,13 @@ internal class DefaultZonesRepository(
     override suspend fun deleteZone(id: Long) {
         zoneRemoteDataSource.deleteZone(id)
         zoneLocalDataSource.deleteById(id)
+    }
+
+    override suspend fun refresh(id: Long) {
+        zoneStore.fresh(id)
+    }
+
+    override suspend fun refreshAll() {
+        allZonesStore.fresh(Unit)
     }
 }
