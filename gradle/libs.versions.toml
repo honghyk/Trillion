@@ -30,6 +30,7 @@ buildConfig = "5.5.1"
 kotlinStdlib = "2.2.0"
 runner = "1.5.2"
 core = "1.5.0"
+store = "5.1.0-alpha07"
 
 [libraries]
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidx-core" }
@@ -72,6 +73,9 @@ androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref =
 postgrest-kt = { module = "io.github.jan-tennert.supabase:postgrest-kt", version.ref = "postgrestKt" }
 ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
 ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" }
+
+# sync
+store = { module = "org.mobilenativefoundation.store:store5", version.ref = "store" }
 
 # test
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }

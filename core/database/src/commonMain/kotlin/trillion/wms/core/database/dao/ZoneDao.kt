@@ -24,14 +24,8 @@ internal interface ZoneDao {
     @Upsert
     suspend fun upsert(zone: ZoneEntity)
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(zone: ZoneEntity): Long
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAll(zones: List<ZoneEntity>)
-
-    @Update
-    suspend fun update(zone: ZoneEntity)
+    @Upsert
+    suspend fun upsertAll(zones: List<ZoneEntity>)
 
     @Delete
     suspend fun delete(zone: ZoneEntity)

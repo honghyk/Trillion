@@ -17,7 +17,7 @@ import trillion.wms.core.database.di.localDataSourceModule
 import trillion.wms.core.network.di.remoteDataSourceModule
 
 val repositoryModule = module {
-    includes(localDataSourceModule, remoteDataSourceModule)
+    includes(localDataSourceModule, remoteDataSourceModule, storeModule)
 
     singleOf(::DefaultZonesRepository) bind ZonesRepository::class
     singleOf(::DefaultFabricRollsRepository) bind FabricRollsRepository::class

@@ -22,19 +22,19 @@ class InMemoryZonesRepository(
     private var lastGeneratedId: Long = 1L
     private val zones = MutableStateFlow(initialDataSet())
 
-    override fun getZoneStream(id: Long, forceRefresh: Boolean): Flow<Zone?> {
+    override fun getZoneStream(id: Long, refresh: Boolean): Flow<Zone?> {
         return zones
             .map { it.firstOrNull { zone -> zone.id == id } }
             .mapLatest { zone -> zone?.let { injectZoneStats(it) } }
     }
 
-    override fun getZoneByRollIdStream(rollId: Long, forceRefresh: Boolean): Flow<Zone?> {
+    override fun getZoneByRollIdStream(rollId: Long, refresh: Boolean): Flow<Zone?> {
         return fabricRollsRepository.getFabricRoll(rollId)
             .filterNotNull()
             .flatMapLatest { roll -> getZoneStream(roll.zoneId) }
     }
 
-    override fun getZonesStream(forceRefresh: Boolean): Flow<List<Zone>> {
+    override fun getZonesStream(refresh: Boolean): Flow<List<Zone>> {
         return zones.mapLatest { zones ->
             zones.map { zone -> injectZoneStats(zone) }
         }

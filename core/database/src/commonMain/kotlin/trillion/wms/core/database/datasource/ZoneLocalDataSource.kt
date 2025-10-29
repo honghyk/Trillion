@@ -12,9 +12,7 @@ interface ZoneLocalDataSource {
     fun getAllZonesStream(): Flow<List<Zone>>
     suspend fun getZoneByName(name: String): Zone?
     suspend fun upsert(zone: Zone)
-    suspend fun insert(zone: Zone): Long
-    suspend fun insertAll(zones: List<Zone>)
-    suspend fun update(zone: Zone)
+    suspend fun upsertAll(zones: List<Zone>)
     suspend fun delete(zone: Zone)
     suspend fun deleteById(id: Long)
     suspend fun clearAll()
@@ -42,16 +40,8 @@ internal class RoomZoneLocalDataSource(
         return zoneDao.upsert(zone.toEntity())
     }
 
-    override suspend fun insert(zone: Zone): Long {
-        return zoneDao.insert(zone.toEntity())
-    }
-
-    override suspend fun insertAll(zones: List<Zone>) {
-        zoneDao.insertAll(zones.map { it.toEntity() })
-    }
-
-    override suspend fun update(zone: Zone) {
-        zoneDao.update(zone.toEntity())
+    override suspend fun upsertAll(zones: List<Zone>) {
+        zoneDao.upsertAll(zones.map { it.toEntity() })
     }
 
     override suspend fun delete(zone: Zone) {
