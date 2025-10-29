@@ -1,6 +1,5 @@
 package trillion.wms.core.network.datasource
 
-import co.touchlab.kermit.Logger
 import trillion.wms.core.model.OutboundHistory
 import trillion.wms.core.network.api.OutboundHistoryApi
 import trillion.wms.core.network.model.toDomain
@@ -8,7 +7,7 @@ import trillion.wms.core.network.model.toDomain
 interface OutboundHistoryRemoteDataSource {
     suspend fun getOutboundHistoriesForRoll(rollId: Long): List<OutboundHistory>
     suspend fun getAllOutboundHistories(): List<OutboundHistory>
-    suspend fun deleteOutboundHistory(id: Long): OutboundHistory?
+    suspend fun deleteOutboundHistory(id: Long)
 }
 
 internal class DefaultOutboundHistoryRemoteDataSource(
@@ -23,7 +22,7 @@ internal class DefaultOutboundHistoryRemoteDataSource(
         return outboundHistoryApi.getAllOutboundHistories().toDomain()
     }
 
-    override suspend fun deleteOutboundHistory(id: Long): OutboundHistory? {
-        return outboundHistoryApi.deleteOutboundHistory(id)?.toDomain()
+    override suspend fun deleteOutboundHistory(id: Long) {
+        return outboundHistoryApi.deleteOutboundHistory(id)
     }
 }

@@ -7,7 +7,7 @@ data class Zone(
     val name: String,
     val description: String,
     val createdAt: Instant,
-    val stats: ZoneStats = ZoneStats()
+    val metrics: ZoneMetrics = ZoneMetrics()
 ) {
     companion object {
         val EMPTY = Zone(
@@ -19,7 +19,7 @@ data class Zone(
     }
 }
 
-data class ZoneStats(
+data class ZoneMetrics(
     val rollCount: Int = 0,
     val totalQuantity: Double = 0.0,
 )

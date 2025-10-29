@@ -257,14 +257,14 @@ private fun ZoneDetailDashboard(
         DashboardCard(
             icon = vectorResource(Icons.Package),
             title = "원단 롤",
-            content = zone.stats.rollCount.toString(),
+            content = zone.metrics.rollCount.toString(),
             description = "구역 내 원단 롤",
             modifier = Modifier.weight(1f),
         )
         DashboardCard(
             icon = vectorResource(Icons.Edit),
             title = "총 수량",
-            content = (zone.stats.totalQuantity * lengthUnit.multiplier).formatDecimal(1) + " ${lengthUnit.abbreviateName}",
+            content = (zone.metrics.totalQuantity * lengthUnit.multiplier).formatDecimal(1) + " ${lengthUnit.abbreviateName}",
             description = "재고 내 원단 수량",
             modifier = Modifier.weight(1f),
         )

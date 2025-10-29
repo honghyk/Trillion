@@ -25,11 +25,8 @@ internal interface OutboundHistoryDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(outboundHistories: List<OutboundHistoryEntity>)
 
-    @Delete
-    suspend fun delete(outboundHistory: OutboundHistoryEntity)
-
     @Query("DELETE FROM outbound_histories WHERE id = :id")
-    suspend fun deleteById(id: Long)
+    suspend fun delete(id: Long)
 
     @Query("DELETE FROM outbound_histories WHERE roll_id = :rollId")
     suspend fun deleteByRollId(rollId: Long)

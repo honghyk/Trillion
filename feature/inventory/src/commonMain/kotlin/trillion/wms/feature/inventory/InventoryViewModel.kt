@@ -12,20 +12,21 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import trillion.wms.core.ui.model.LengthUnit
-import trillion.wms.core.ui.utils.RefreshableUiResultFlow
-import trillion.wms.feature.inventory.SearchUiState.*
 import trillion.wms.core.domain.DeleteFabricRollUseCase
-import trillion.wms.core.domain.GetInventoryOverViewStreamUseCase
+import trillion.wms.core.domain.GetInventoryOverviewStreamUseCase
 import trillion.wms.core.domain.GetZonesStreamUseCase
 import trillion.wms.core.domain.SearchFabricRollsStreamUseCase
 import trillion.wms.core.model.FabricRoll
 import trillion.wms.core.model.InventorySummary
+import trillion.wms.core.ui.model.LengthUnit
+import trillion.wms.core.ui.utils.RefreshableUiResultFlow
 import trillion.wms.core.ui.utils.UiMessageManager
+import trillion.wms.feature.inventory.SearchUiState.Filters
+import trillion.wms.feature.inventory.SearchUiState.ZoneFilter
 
 class InventoryViewModel(
     getZonesStream: GetZonesStreamUseCase,
-    getInventoryOverViewStream: GetInventoryOverViewStreamUseCase,
+    getInventoryOverViewStream: GetInventoryOverviewStreamUseCase,
     private val searchFabricRollsStream: SearchFabricRollsStreamUseCase,
     private val deleteFabricRoll: DeleteFabricRollUseCase,
 ) : ViewModel() {
@@ -48,10 +49,7 @@ class InventoryViewModel(
     )
 
     private val inventorySummary = RefreshableUiResultFlow(
-        produce = {
-            getInventoryOverViewStream(forceRefresh = true)
-                .map { it ?: InventorySummary.EMPTY }
-        }
+        produce = { getInventoryOverViewStream().map { it ?: InventorySummary.EMPTY } }
     )
     val searchResults = RefreshableUiResultFlow(
         produce = {

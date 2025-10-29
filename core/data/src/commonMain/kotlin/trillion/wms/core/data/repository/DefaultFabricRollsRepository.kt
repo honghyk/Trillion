@@ -5,166 +5,113 @@ import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import trillion.wms.core.data.repository.api.FabricRollsRepository
-import trillion.wms.core.data.repository.api.InventoryRepository
-import trillion.wms.core.data.repository.api.ZonesRepository
 import trillion.wms.core.database.datasource.FabricRollLocalDataSource
-import trillion.wms.core.database.datasource.OutboundHistoryLocalDataSource
 import trillion.wms.core.model.AddFabricRollRequest
 import trillion.wms.core.model.FabricRoll
-import trillion.wms.core.model.OutboundHistory
 import trillion.wms.core.model.OutboundRequest
 import trillion.wms.core.model.UpdateFabricRollRequest
 import trillion.wms.core.network.datasource.FabricRollRemoteDataSource
-import trillion.wms.core.network.datasource.OutboundHistoryRemoteDataSource
 
 class DefaultFabricRollsRepository(
-    private val zonesRepository: ZonesRepository,
-    private val inventoryRepository: InventoryRepository,
-    private val fabricRollLocalDataSource: FabricRollLocalDataSource,
-    private val fabricRollRemoteDataSource: FabricRollRemoteDataSource,
-    private val outboundHistoryLocalDataSource: OutboundHistoryLocalDataSource,
-    private val outboundHistoryRemoteDataSource: OutboundHistoryRemoteDataSource,
+    private val local: FabricRollLocalDataSource,
+    private val remote: FabricRollRemoteDataSource,
 ) : FabricRollsRepository {
 
-    override fun getFabricRollStream(id: Long, forceRefresh: Boolean): Flow<FabricRoll?> = flow {
-        val localDataFlow = fabricRollLocalDataSource.getFabricRollStream(id)
-        val currentLocalData = localDataFlow.first()
+    override fun getFabricRoll(
+        id: Long,
+        forceFresh: Boolean
+    ): Flow<FabricRoll?> = networkBoundFlow(
+        forceFresh = forceFresh,
+        fetcher = { remote.getFabricRoll(id) },
+        readEntity = local.getFabricRollStream(id),
+        insertEntity = { local.insert(it) },
+        deleteEntity = { local.deleteById(id) }
+    )
 
-        if (forceRefresh || currentLocalData == null) {
-            try {
-                val remoteRoll = fabricRollRemoteDataSource.getFabricRollById(id)
-                if (remoteRoll != null) {
-                    fabricRollLocalDataSource.insert(remoteRoll)
-                } else if (forceRefresh && currentLocalData != null) {
-                    fabricRollLocalDataSource.deleteById(id)
-                }
-            } catch (e: Exception) {
-                if (currentLocalData == null) throw e
-            }
-        }
-        emitAll(localDataFlow)
+    override fun getFabricRolls(zoneId: Long, forceFresh: Boolean): Flow<List<FabricRoll>> =
+        networkBoundFlowExt(
+            forceFresh = forceFresh,
+            fetcher = { remote.getFabricRolls(zoneId) },
+            readEntity = local.getFabricRollsStreamByZoneId(zoneId),
+            insertEntity = { local.insertAll(it) },
+            deleteEntity = { local.deleteByZoneId(zoneId) }
+        )
+
+    override fun getAllFabricRolls(forceFresh: Boolean): Flow<List<FabricRoll>> =
+        networkBoundFlowExt(
+            forceFresh = forceFresh,
+            fetcher = { remote.getFabricRolls() },
+            readEntity = local.getAllFabricRollsStream(),
+            insertEntity = { local.insertAll(it) },
+            deleteEntity = { local.clearAll() }
+        )
+
+    override suspend fun addFabricRoll(request: AddFabricRollRequest): FabricRoll {
+        val createdRoll = remote.addFabricRoll(request)
+        local.insert(createdRoll)
+
+        return createdRoll
     }
 
-    override fun getFabricRollsStream(zoneId: Long, forceRefresh: Boolean): Flow<List<FabricRoll>> =
-        flow {
-            val localDataFlow = fabricRollLocalDataSource.getFabricRollsStreamByZoneId(zoneId)
-            val currentLocalData = localDataFlow.first()
+    override suspend fun updateFabricRoll(request: UpdateFabricRollRequest): FabricRoll {
+        val updatedRoll = remote.updateFabricRoll(request)
+        local.update(updatedRoll)
 
-            if (forceRefresh || currentLocalData.isEmpty()) {
-                try {
-                    val remoteRolls = fabricRollRemoteDataSource.getFabricRolls(zoneId)
-                    if (forceRefresh) {
-                        fabricRollLocalDataSource.deleteByZoneId(zoneId)
-                    }
-                    fabricRollLocalDataSource.insertAll(remoteRolls)
-                } catch (e: Exception) {
-                    if (currentLocalData.isEmpty()) throw e
-                }
-            }
-            emitAll(localDataFlow)
-        }
-
-    override fun getAllFabricRollsStream(forceRefresh: Boolean): Flow<List<FabricRoll>> = flow {
-        val localDataFlow = fabricRollLocalDataSource.getAllFabricRollsStream()
-        val currentLocalData = localDataFlow.first()
-
-        if (forceRefresh || currentLocalData.isEmpty()) {
-            try {
-                val remoteRolls = fabricRollRemoteDataSource.getFabricRolls()
-                if (forceRefresh) {
-                    fabricRollLocalDataSource.clearAll()
-                }
-                fabricRollLocalDataSource.insertAll(remoteRolls)
-            } catch (e: Exception) {
-                if (currentLocalData.isEmpty()) throw e
-            }
-        }
-        emitAll(localDataFlow)
-    }
-
-    override fun getOutboundHistoryStream(
-        rollId: Long,
-        forceRefresh: Boolean
-    ): Flow<List<OutboundHistory>> = flow {
-        val localDataFlow =
-            outboundHistoryLocalDataSource.getOutboundHistoriesStreamByRollId(rollId)
-        val currentLocalData = localDataFlow.first()
-
-        if (forceRefresh || currentLocalData.isEmpty()) {
-            try {
-                val remoteHistory =
-                    outboundHistoryRemoteDataSource.getOutboundHistoriesForRoll(rollId)
-                if (forceRefresh) {
-                    outboundHistoryLocalDataSource.deleteByRollId(rollId)
-                }
-                outboundHistoryLocalDataSource.insertAll(remoteHistory)
-            } catch (e: Exception) {
-                if (currentLocalData.isEmpty()) throw e
-            }
-        }
-        emitAll(localDataFlow)
-    }
-
-    override suspend fun addFabricRoll(request: AddFabricRollRequest) {
-        val createdRoll = fabricRollRemoteDataSource.addFabricRoll(request)
-        fabricRollLocalDataSource.insert(createdRoll)
-
-        zonesRepository.getZoneStream(request.zoneId, forceRefresh = true).first()
-        inventoryRepository.getInventoryOverviewStream(true).first()
-    }
-
-    override suspend fun updateFabricRoll(request: UpdateFabricRollRequest) {
-        val originalFabricRoll = fabricRollLocalDataSource.getFabricRollStream(request.id).first()
-        val updatedRemoteRoll = fabricRollRemoteDataSource.updateFabricRoll(request)
-        fabricRollLocalDataSource.update(updatedRemoteRoll)
-
-        zonesRepository.getZoneStream(updatedRemoteRoll.zoneId, forceRefresh = true).first()
-        if (originalFabricRoll != null && originalFabricRoll.zoneId != updatedRemoteRoll.zoneId) {
-            zonesRepository.getZoneStream(originalFabricRoll.zoneId, forceRefresh = true).first()
-        }
-        inventoryRepository.getInventoryOverviewStream(true).first()
+        return updatedRoll
     }
 
     override suspend fun outboundFabricRoll(request: OutboundRequest) {
-        val newHistory = fabricRollRemoteDataSource.outboundFabricRoll(request)
-        val updatedRemoteRoll = fabricRollRemoteDataSource.getFabricRollById(request.rollId)
-
-        if (updatedRemoteRoll != null) {
-            fabricRollLocalDataSource.recordOutbound(newHistory, updatedRemoteRoll)
-        } else {
-            outboundHistoryLocalDataSource.insert(newHistory)
-        }
-
-        if (updatedRemoteRoll != null) {
-            zonesRepository.getZoneStream(updatedRemoteRoll.zoneId, forceRefresh = true).first()
-            inventoryRepository.getInventoryOverviewStream(true).first()
-        }
+        val newHistory = remote.outboundFabricRoll(request)
+        local.recordOutbound(newHistory)
     }
 
     override suspend fun deleteFabricRoll(id: Long) {
-        val zoneId = fabricRollLocalDataSource.getFabricRollStream(id).first()?.zoneId
-
-        fabricRollRemoteDataSource.deleteFabricRoll(id)
-        fabricRollLocalDataSource.deleteById(id)
-
-        if (zoneId != null) {
-            zonesRepository.getZoneStream(zoneId, forceRefresh = true).first()
-            inventoryRepository.getInventoryOverviewStream(true).first()
-        }
+        remote.deleteFabricRoll(id)
+        local.deleteById(id)
     }
 
-    override suspend fun deleteOutboundHistory(id: Long) {
-        val localHistory = outboundHistoryLocalDataSource.getOutboundHistoryStream(id).first()
-        outboundHistoryRemoteDataSource.deleteOutboundHistory(id)
-        outboundHistoryLocalDataSource.deleteById(id)
-
-        if (localHistory != null) {
-            getFabricRollStream(localHistory.rollId, forceRefresh = true).first()
-            val updatedRoll = fabricRollLocalDataSource.getFabricRollStream(localHistory.rollId).first()
-            if (updatedRoll != null) {
-                zonesRepository.getZoneStream(updatedRoll.zoneId, forceRefresh = true).first()
+    private fun <T : Any?> networkBoundFlow(
+        forceFresh: Boolean,
+        fetcher: suspend () -> T?,
+        readEntity: Flow<T?>,
+        insertEntity: suspend (T) -> Unit,
+        deleteEntity: suspend () -> Unit,
+    ): Flow<T?> = flow {
+        val currentValue = readEntity.first()
+        if (forceFresh || currentValue == null) {
+            try {
+                val remoteEntity = fetcher()
+                if (remoteEntity == null) {
+                    deleteEntity()
+                } else {
+                    insertEntity(remoteEntity)
+                }
+            } catch (e: Exception) {
+                if (currentValue == null) throw e
             }
-            inventoryRepository.getInventoryOverviewStream(forceRefresh = true).first()
         }
+        emitAll(readEntity)
+    }
+
+    private fun <T : Any> networkBoundFlowExt(
+        forceFresh: Boolean,
+        fetcher: suspend () -> List<T>,
+        readEntity: Flow<List<T>>,
+        insertEntity: suspend (List<T>) -> Unit,
+        deleteEntity: suspend () -> Unit,
+    ): Flow<List<T>> = flow {
+        val currentValue = readEntity.first()
+        if (forceFresh || currentValue.isEmpty()) {
+            try {
+                val remoteEntities = fetcher()
+                if (forceFresh) {
+                    deleteEntity()
+                }
+                insertEntity(remoteEntities)
+            } catch (e: Exception) {
+                if (currentValue.isEmpty()) throw e
+            }
+        }
+        emitAll(readEntity)
     }
 }

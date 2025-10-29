@@ -1,6 +1,7 @@
 package trillion.wms.core.data.repository.api
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import trillion.wms.core.model.CreateZoneRequest
 import trillion.wms.core.model.UpdateZoneRequest
 import trillion.wms.core.model.Zone
@@ -13,4 +14,6 @@ interface ZonesRepository {
     suspend fun createZone(request: CreateZoneRequest)
     suspend fun updateZone(request: UpdateZoneRequest)
     suspend fun deleteZone(id: Long)
+
+    suspend fun refresh(id: Long) = getZoneStream(id, true).first()
 }

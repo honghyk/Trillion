@@ -5,7 +5,7 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import trillion.wms.core.model.Zone
-import trillion.wms.core.model.ZoneStats // Import ZoneStats
+import trillion.wms.core.model.ZoneMetrics // Import ZoneStats
 import kotlin.time.Instant
 
 @Entity(
@@ -26,7 +26,7 @@ fun ZoneEntity.toDomain() = Zone(
     name = name,
     description = description.orEmpty(),
     createdAt = createdAt,
-    stats = ZoneStats(
+    metrics = ZoneMetrics(
         rollCount = rollCount,
         totalQuantity = totalQuantity
     )
@@ -37,6 +37,6 @@ fun Zone.toEntity() = ZoneEntity(
     name = name,
     description = description.ifEmpty { null },
     createdAt = createdAt,
-    rollCount = stats.rollCount,
-    totalQuantity = stats.totalQuantity
+    rollCount = metrics.rollCount,
+    totalQuantity = metrics.totalQuantity
 )

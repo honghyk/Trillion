@@ -9,6 +9,6 @@ class GetFabricRollStreamUseCase(
 ) {
 
     operator fun invoke(id: Long, forceRefresh: Boolean = false): Flow<FabricRoll?> {
-        return fabricRollsRepository.getFabricRollStream(id, forceRefresh)
+        return fabricRollsRepository.getFabricRoll(id, forceRefresh)
     }
 }

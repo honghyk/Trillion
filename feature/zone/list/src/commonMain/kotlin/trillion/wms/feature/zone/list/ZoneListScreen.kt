@@ -258,7 +258,7 @@ private fun ZoneCard(
                     modifier = Modifier.size(16.dp),
                 )
                 Text(
-                    text = "${zone.stats.rollCount} 롤",
+                    text = "${zone.metrics.rollCount} 롤",
                 )
             }
 

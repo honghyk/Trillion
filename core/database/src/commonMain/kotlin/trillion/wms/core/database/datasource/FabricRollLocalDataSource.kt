@@ -2,6 +2,7 @@ package trillion.wms.core.database.datasource
 
 import androidx.room.useWriterConnection
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import trillion.wms.core.database.AppDatabase // Assuming AppDatabase is your RoomDatabase subclass
 import trillion.wms.core.database.dao.FabricRollDao
@@ -24,13 +25,13 @@ interface FabricRollLocalDataSource {
     suspend fun deleteByZoneId(zoneId: Long)
     suspend fun clearAll()
 
-    suspend fun recordOutbound(history: OutboundHistory, updatedRoll: FabricRoll)
+    suspend fun recordOutbound(history: OutboundHistory)
 }
 
 internal class RoomFabricRollLocalDataSource(
-    private val appDatabase: AppDatabase, // For useWriterConnection
+    private val appDatabase: AppDatabase,
     private val fabricRollDao: FabricRollDao,
-    private val outboundHistoryDao: OutboundHistoryDao // Added OutboundHistoryDao
+    private val outboundHistoryDao: OutboundHistoryDao
 ) : FabricRollLocalDataSource {
 
     override fun getFabricRollStream(id: Long): Flow<FabricRoll?> {
@@ -83,10 +84,20 @@ internal class RoomFabricRollLocalDataSource(
         fabricRollDao.clearAll()
     }
 
-    override suspend fun recordOutbound(history: OutboundHistory, updatedRoll: FabricRoll) {
+    override suspend fun recordOutbound(history: OutboundHistory) {
         appDatabase.useWriterConnection {
             outboundHistoryDao.insert(history.toEntity())
-            fabricRollDao.insert(updatedRoll.toEntity())
+            reduceRemainingQuantity(history)
+        }
+    }
+
+    private suspend fun reduceRemainingQuantity(history: OutboundHistory) {
+        val rollEntity = fabricRollDao.getFabricRollStream(history.rollId).first()
+        if (rollEntity != null) {
+            fabricRollDao.updateRemainingQuantity(
+                rollEntity.id,
+                rollEntity.remainingQuantity - history.quantity
+            )
         }
     }
 }

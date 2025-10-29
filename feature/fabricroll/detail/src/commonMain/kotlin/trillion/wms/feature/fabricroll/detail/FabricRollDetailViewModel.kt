@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import trillion.wms.core.domain.DeleteOutboundHistoryUseCase
 import trillion.wms.core.domain.GetFabricRollStreamUseCase
-import trillion.wms.core.domain.GetOutboundHistoryStreamUseCase
+import trillion.wms.core.domain.GetOutboundHistoriesUseCase
 import trillion.wms.core.domain.GetZoneStreamUseCase
 import trillion.wms.core.domain.GetZoneStreamUseCase.Params
 import trillion.wms.core.model.OutboundHistory
@@ -26,7 +26,7 @@ class FabricRollDetailViewModel(
     rollId: Long,
     getZoneStream: GetZoneStreamUseCase,
     getFabricRollStream: GetFabricRollStreamUseCase,
-    getOutboundHistoriesStream: GetOutboundHistoryStreamUseCase,
+    getOutboundHistoriesStream: GetOutboundHistoriesUseCase,
     private val deleteOutboundHistory: DeleteOutboundHistoryUseCase,
 ) : ViewModel() {
 
@@ -48,7 +48,7 @@ class FabricRollDetailViewModel(
         }
     )
     private val outboundHistories = RefreshableUiResultFlow(
-        produce = { getOutboundHistoriesStream(rollId, forceRefresh = true) }
+        produce = { getOutboundHistoriesStream(rollId, forceFresh = true) }
     )
     private val isRefreshing = combine(
         fabricRoll.isRefreshing,

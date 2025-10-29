@@ -12,9 +12,9 @@ class InMemorySearchRepository(
 
     override fun searchFabricRolls(query: String, zoneId: Long?): Flow<List<FabricRoll>> {
         return if (zoneId == null) {
-            fabricRollsRepository.getAllFabricRollsStream()
+            fabricRollsRepository.getAllFabricRolls()
         } else {
-            fabricRollsRepository.getFabricRollsStream(zoneId)
+            fabricRollsRepository.getFabricRolls(zoneId)
         }.map { fabricRolls ->
             if (query.isBlank()) {
                 fabricRolls

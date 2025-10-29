@@ -47,6 +47,9 @@ internal interface FabricRollDao {
     @Update
     suspend fun update(fabricRoll: FabricRollEntity)
 
+    @Query("UPDATE fabric_rolls SET remaining_quantity = :remainingQuantity WHERE id = :id")
+    suspend fun updateRemainingQuantity(id: Long, remainingQuantity: Double)
+
     @Delete
     suspend fun delete(fabricRoll: FabricRollEntity)
 

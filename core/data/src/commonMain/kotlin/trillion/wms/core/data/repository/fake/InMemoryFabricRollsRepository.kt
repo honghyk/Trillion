@@ -22,57 +22,43 @@ class InMemoryFabricRollsRepository : FabricRollsRepository {
     private val fabricRolls = MutableStateFlow(generateFakeFabricRolls(1000))
     private val outboundHistories = MutableStateFlow<List<OutboundHistory>>(emptyList())
 
-    override fun getFabricRollStream(id: Long, forceRefresh: Boolean): Flow<FabricRoll?> {
+    override fun getFabricRoll(id: Long, forceFresh: Boolean): Flow<FabricRoll?> {
         return fabricRolls.map { rolls -> rolls.firstOrNull { it.id == id } }
     }
 
-    override fun getFabricRollsStream(zoneId: Long, forceRefresh: Boolean): Flow<List<FabricRoll>> {
+    override fun getFabricRolls(zoneId: Long, forceFresh: Boolean): Flow<List<FabricRoll>> {
         return fabricRolls
             .map { rolls -> rolls.filter { it.zoneId == zoneId } }
     }
 
-    override fun getAllFabricRollsStream(forceRefresh: Boolean): Flow<List<FabricRoll>> {
+    override fun getAllFabricRolls(forceFresh: Boolean): Flow<List<FabricRoll>> {
         return fabricRolls
     }
 
-    override suspend fun addFabricRoll(request: AddFabricRollRequest) {
-        fabricRolls.update {
-            if (it.any { roll -> roll.id == request.id }) throw AlreadyExistsException()
-            it + FabricRoll(
-                id = request.id,
-                zoneId = request.zoneId,
-                itemNo = request.itemNo,
-                orderNo = request.orderNo.orEmpty(),
-                color = request.color.orEmpty(),
-                factory = request.factory.orEmpty(),
-                finish = request.finish.orEmpty(),
-                remark = request.remark.orEmpty(),
-                quantity = request.quantity,
-                remainingQuantity = request.quantity,
-                createdAt = Clock.System.now()
-            )
+    override suspend fun addFabricRoll(request: AddFabricRollRequest): FabricRoll {
+        val newFabricRoll = request.toFabricRoll()
+        fabricRolls.update { currentRolls ->
+            if (currentRolls.any { it.id == request.id }) {
+                throw AlreadyExistsException("Fabric roll with ID ${request.id} already exists.")
+            }
+            currentRolls + newFabricRoll
         }
+        return newFabricRoll
     }
 
-    override suspend fun updateFabricRoll(request: UpdateFabricRollRequest) {
-        fabricRolls.update {
-            it.map { roll ->
-                if (roll.id == request.id) {
-                    roll.copy(
-                        zoneId = request.zoneId ?: roll.zoneId,
-                        itemNo = request.itemNo ?: roll.itemNo,
-                        orderNo = request.orderNo ?: roll.orderNo,
-                        color = request.color ?: roll.color,
-                        factory = request.factory ?: roll.factory,
-                        finish = request.finish ?: roll.finish,
-                        remark = request.remark ?: roll.remark,
-                        quantity = request.quantity ?: roll.quantity,
-                    )
+    override suspend fun updateFabricRoll(request: UpdateFabricRollRequest): FabricRoll {
+        var updatedFabricRoll: FabricRoll? = null
+        fabricRolls.update { currentRolls ->
+            currentRolls.map {
+                if (it.id == request.id) {
+                    updatedFabricRoll = it.update(request)
+                    updatedFabricRoll
                 } else {
-                    roll
+                    it
                 }
             }
         }
+        return updatedFabricRoll ?: throw NoSuchElementException()
     }
 
     override suspend fun deleteFabricRoll(id: Long) {
@@ -99,16 +85,30 @@ class InMemoryFabricRollsRepository : FabricRollsRepository {
         }
     }
 
-    override fun getOutboundHistoryStream(
-        rollId: Long,
-        forceRefresh: Boolean
-    ): Flow<List<OutboundHistory>> {
-        return outboundHistories.map { it.filter { history -> history.rollId == rollId } }
-    }
+    private fun AddFabricRollRequest.toFabricRoll() = FabricRoll(
+        id = id,
+        zoneId = zoneId,
+        itemNo = itemNo,
+        orderNo = orderNo.orEmpty(),
+        color = color.orEmpty(),
+        factory = factory.orEmpty(),
+        finish = finish.orEmpty(),
+        remark = remark.orEmpty(),
+        quantity = quantity,
+        remainingQuantity = quantity,
+        createdAt = Clock.System.now()
+    )
 
-    override suspend fun deleteOutboundHistory(id: Long) {
-        outboundHistories.update { it.filter { history -> history.id != id } }
-    }
+    private fun FabricRoll.update(request: UpdateFabricRollRequest) = copy(
+        zoneId = request.zoneId ?: zoneId,
+        itemNo = request.itemNo ?: itemNo,
+        orderNo = request.orderNo ?: orderNo,
+        color = request.color ?: color,
+        factory = request.factory ?: factory,
+        finish = request.finish ?: finish,
+        remark = request.remark ?: remark,
+        quantity = request.quantity ?: quantity,
+    )
 
     private fun generateFakeFabricRolls(count: Int): List<FabricRoll> {
         val colors = listOf(

@@ -3,7 +3,7 @@ package trillion.wms.core.network.model
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import trillion.wms.core.model.Zone
-import trillion.wms.core.model.ZoneStats // Import ZoneStats
+import trillion.wms.core.model.ZoneMetrics // Import ZoneStats
 import kotlin.time.Instant
 
 @Serializable
@@ -22,7 +22,7 @@ fun ZoneDto.toDomain(): Zone {
         name = this.name,
         description = this.description.orEmpty(),
         createdAt = Instant.parse(this.createdAt),
-        stats = ZoneStats(
+        metrics = ZoneMetrics(
             rollCount = this.rollCount ?: 0,
             totalQuantity = this.totalQuantity ?: 0.0
         )

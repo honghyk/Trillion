@@ -10,7 +10,7 @@ import trillion.wms.core.network.model.OutboundHistoryDto
 internal interface OutboundHistoryApi {
     suspend fun getOutboundHistoriesForRoll(rollId: Long): List<OutboundHistoryDto>
     suspend fun getAllOutboundHistories(): List<OutboundHistoryDto>
-    suspend fun deleteOutboundHistory(id: Long): OutboundHistoryDto?
+    suspend fun deleteOutboundHistory(id: Long)
 }
 
 internal class SupabaseOutboundHistoryApi(
@@ -36,16 +36,11 @@ internal class SupabaseOutboundHistoryApi(
             .decodeList()
     }
 
-    override suspend fun deleteOutboundHistory(id: Long): OutboundHistoryDto? {
-        val response = supabaseClient.postgrest
+    override suspend fun deleteOutboundHistory(id: Long) {
+        supabaseClient.postgrest
             .rpc(
                 function = "delete_outbound_history",
                 parameters = mapOf("p_id" to id)
             )
-
-        if (response.data == "null") {
-            return null
-        }
-        return response.decodeAs()
     }
 }

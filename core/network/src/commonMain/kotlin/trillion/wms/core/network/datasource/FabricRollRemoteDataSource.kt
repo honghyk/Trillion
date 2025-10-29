@@ -14,8 +14,8 @@ import trillion.wms.core.network.model.toRpcParams
 import trillion.wms.core.network.model.toUpdatePayload
 
 interface FabricRollRemoteDataSource {
+    suspend fun getFabricRoll(id: Long): FabricRoll?
     suspend fun getFabricRolls(zoneId: Long? = null): List<FabricRoll>
-    suspend fun getFabricRollById(id: Long): FabricRoll?
     suspend fun addFabricRoll(request: AddFabricRollRequest): FabricRoll
     suspend fun updateFabricRoll(request: UpdateFabricRollRequest): FabricRoll // Added update method
     suspend fun outboundFabricRoll(request: OutboundRequest): OutboundHistory
@@ -27,12 +27,12 @@ internal class DefaultFabricRollRemoteDataSource(
     private val fabricRollApi: FabricRollApi
 ) : FabricRollRemoteDataSource {
 
-    override suspend fun getFabricRolls(zoneId: Long?): List<FabricRoll> {
-        return fabricRollApi.getFabricRolls(zoneId).toDomain()
+    override suspend fun getFabricRoll(id: Long): FabricRoll? {
+        return fabricRollApi.getFabricRollById(id)?.toDomain()
     }
 
-    override suspend fun getFabricRollById(id: Long): FabricRoll? {
-        return fabricRollApi.getFabricRollById(id)?.toDomain()
+    override suspend fun getFabricRolls(zoneId: Long?): List<FabricRoll> {
+        return fabricRollApi.getFabricRolls(zoneId).toDomain()
     }
 
     override suspend fun addFabricRoll(request: AddFabricRollRequest): FabricRoll {

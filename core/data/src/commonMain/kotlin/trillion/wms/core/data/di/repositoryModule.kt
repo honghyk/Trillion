@@ -5,10 +5,12 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 import trillion.wms.core.data.repository.DefaultFabricRollsRepository
 import trillion.wms.core.data.repository.DefaultInventoryRepository
+import trillion.wms.core.data.repository.DefaultRollOutboundHistoryRepository
 import trillion.wms.core.data.repository.DefaultSearchRepository
 import trillion.wms.core.data.repository.DefaultZonesRepository
 import trillion.wms.core.data.repository.api.FabricRollsRepository
 import trillion.wms.core.data.repository.api.InventoryRepository
+import trillion.wms.core.data.repository.api.RollOutboundHistoryRepository
 import trillion.wms.core.data.repository.api.SearchRepository
 import trillion.wms.core.data.repository.api.ZonesRepository
 import trillion.wms.core.database.di.localDataSourceModule
@@ -21,4 +23,5 @@ val repositoryModule = module {
     singleOf(::DefaultFabricRollsRepository) bind FabricRollsRepository::class
     singleOf(::DefaultSearchRepository) bind SearchRepository::class
     singleOf(::DefaultInventoryRepository) bind InventoryRepository::class
+    singleOf(::DefaultRollOutboundHistoryRepository) bind RollOutboundHistoryRepository::class
 }

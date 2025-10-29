@@ -6,7 +6,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
-import trillion.wms.core.data.repository.api.InventoryRepository
 import trillion.wms.core.data.repository.api.ZonesRepository
 import trillion.wms.core.database.datasource.FabricRollLocalDataSource
 import trillion.wms.core.database.datasource.ZoneLocalDataSource
@@ -16,7 +15,6 @@ import trillion.wms.core.model.Zone
 import trillion.wms.core.network.datasource.ZoneRemoteDataSource
 
 class DefaultZonesRepository(
-    private val inventoryRepository: InventoryRepository,
     private val zoneLocalDataSource: ZoneLocalDataSource,
     private val zoneRemoteDataSource: ZoneRemoteDataSource,
     private val fabricRollLocalDataSource: FabricRollLocalDataSource,
@@ -78,21 +76,15 @@ class DefaultZonesRepository(
     override suspend fun createZone(request: CreateZoneRequest) {
         val createdZone = zoneRemoteDataSource.createZone(request)
         zoneLocalDataSource.insert(createdZone)
-
-        inventoryRepository.getInventoryOverviewStream(true).first()
     }
 
     override suspend fun updateZone(request: UpdateZoneRequest) {
         val updatedZone = zoneRemoteDataSource.updateZone(request)
         zoneLocalDataSource.update(updatedZone)
-
-        inventoryRepository.getInventoryOverviewStream(true).first()
     }
 
     override suspend fun deleteZone(id: Long) {
         zoneRemoteDataSource.deleteZone(id)
         zoneLocalDataSource.deleteById(id)
-
-        inventoryRepository.getInventoryOverviewStream(true).first()
     }
 }

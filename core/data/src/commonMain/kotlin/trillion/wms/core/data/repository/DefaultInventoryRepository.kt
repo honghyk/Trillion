@@ -1,31 +1,27 @@
 package trillion.wms.core.data.repository
 
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.combine
 import trillion.wms.core.data.repository.api.InventoryRepository
-import trillion.wms.core.database.datasource.InventoryLocalDataSource
+import trillion.wms.core.database.datasource.FabricRollLocalDataSource
+import trillion.wms.core.database.datasource.ZoneLocalDataSource
 import trillion.wms.core.model.InventorySummary
-import trillion.wms.core.network.datasource.InventoryRemoteDataSource
 
 class DefaultInventoryRepository(
-    private val inventoryLocalDataSource: InventoryLocalDataSource,
-    private val inventoryRemoteDataSource: InventoryRemoteDataSource,
+    private val fabricRollLocalDataSource: FabricRollLocalDataSource,
+    private val zonesLocalDataSource: ZoneLocalDataSource,
 ) : InventoryRepository {
 
-    override fun getInventoryOverviewStream(forceRefresh: Boolean): Flow<InventorySummary?> = flow {
-        val localData = inventoryLocalDataSource.getInventorySummary().first()
-
-        if (forceRefresh || localData == null) {
-            try {
-                val remoteSummary = inventoryRemoteDataSource.getInventorySummary()
-                inventoryLocalDataSource.setInventorySummary(remoteSummary)
-            } catch (e: Exception) {
-                if (localData == null) throw e
-            }
+    override fun getInventoryOverviewStream(): Flow<InventorySummary?> {
+        return combine(
+            fabricRollLocalDataSource.getAllFabricRollsStream(),
+            zonesLocalDataSource.getAllZonesStream(),
+        ) { fabricRolls, zones ->
+            InventorySummary(
+                totalRollCount = fabricRolls.size,
+                totalQuantity = fabricRolls.sumOf { it.remainingQuantity },
+                totalZoneCount = zones.size,
+            )
         }
-
-        emitAll(inventoryLocalDataSource.getInventorySummary())
     }
 }

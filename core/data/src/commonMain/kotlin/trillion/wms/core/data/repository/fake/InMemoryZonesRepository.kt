@@ -13,7 +13,7 @@ import trillion.wms.core.data.repository.api.ZonesRepository
 import trillion.wms.core.model.CreateZoneRequest
 import trillion.wms.core.model.UpdateZoneRequest
 import trillion.wms.core.model.Zone
-import trillion.wms.core.model.ZoneStats
+import trillion.wms.core.model.ZoneMetrics
 import kotlin.time.Clock
 
 class InMemoryZonesRepository(
@@ -29,7 +29,7 @@ class InMemoryZonesRepository(
     }
 
     override fun getZoneByRollIdStream(rollId: Long, forceRefresh: Boolean): Flow<Zone?> {
-        return fabricRollsRepository.getFabricRollStream(rollId)
+        return fabricRollsRepository.getFabricRoll(rollId)
             .filterNotNull()
             .flatMapLatest { roll -> getZoneStream(roll.zoneId) }
     }
@@ -41,9 +41,9 @@ class InMemoryZonesRepository(
     }
 
     private suspend fun injectZoneStats(zone: Zone): Zone {
-        val fabricRolls = fabricRollsRepository.getFabricRollsStream(zone.id).first()
+        val fabricRolls = fabricRollsRepository.getFabricRolls(zone.id).first()
         return zone.copy(
-            stats = ZoneStats(
+            metrics = ZoneMetrics(
                 totalQuantity = fabricRolls.sumOf { it.quantity },
                 rollCount = fabricRolls.count(),
             )

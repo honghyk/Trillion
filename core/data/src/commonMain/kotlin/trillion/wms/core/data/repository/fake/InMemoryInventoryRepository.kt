@@ -12,10 +12,10 @@ class InMemoryInventoryRepository(
     private val fabricRollsRepository: FabricRollsRepository,
 ) : InventoryRepository {
 
-    override fun getInventoryOverviewStream(forceRefresh: Boolean): Flow<InventorySummary> {
+    override fun getInventoryOverviewStream(): Flow<InventorySummary> {
         return combine(
             zonesRepository.getZonesStream(),
-            fabricRollsRepository.getAllFabricRollsStream(),
+            fabricRollsRepository.getAllFabricRolls(),
         ) { zones, fabricRolls ->
             InventorySummary(
                 totalRollCount = fabricRolls.size,
