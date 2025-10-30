@@ -1,9 +1,9 @@
 package trillion.wms.feature.inventory
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.exclude
@@ -33,8 +33,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.jetbrains.compose.resources.vectorResource
 import org.koin.compose.viewmodel.koinViewModel
 import trillion.wms.core.designsystem.component.ButtonVariant
-import trillion.wms.core.designsystem.component.DashboardCard
-import trillion.wms.core.designsystem.component.DashboardGrid
 import trillion.wms.core.designsystem.component.DropdownTextField
 import trillion.wms.core.designsystem.component.Icons
 import trillion.wms.core.designsystem.component.SdsOutlineButton
@@ -43,16 +41,13 @@ import trillion.wms.core.designsystem.component.SdsTextField
 import trillion.wms.core.designsystem.component.SdsTopAppBar
 import trillion.wms.core.designsystem.extensions.hideKeyboardOnClick
 import trillion.wms.core.model.FabricRoll
-import trillion.wms.core.model.InventorySummary
 import trillion.wms.core.ui.component.ErrorContent
 import trillion.wms.core.ui.component.FabricRollTable
 import trillion.wms.core.ui.component.LengthUnitToggleButtons
 import trillion.wms.core.ui.component.LoadingContent
-import trillion.wms.core.ui.component.RefreshableContent
 import trillion.wms.core.ui.compositionlocal.safeDrawingWithBottomNavBar
 import trillion.wms.core.ui.model.LengthUnit
 import trillion.wms.core.ui.utils.UiResult
-import trillion.wms.core.ui.utils.formatDecimal
 import trillion.wms.feature.inventory.SearchUiState.Filters
 import trillion.wms.feature.inventory.SearchUiState.ZoneFilter
 
@@ -75,7 +70,6 @@ fun InventoryScreen(
         onOutboundFabricRollClick = { roll -> onOutboundFabricRollClick(roll.id) },
         onEditFabricRollClick = { roll -> onEditFabricRollClick(roll.id) },
         onDeleteFabricRollClick = viewModel::deleteFabricRoll,
-        onRefresh = viewModel::refresh,
         onMessageShown = viewModel::clearMessage,
         modifier = modifier,
     )
@@ -91,7 +85,6 @@ private fun InventoryScreen(
     onOutboundFabricRollClick: (FabricRoll) -> Unit,
     onEditFabricRollClick: (FabricRoll) -> Unit,
     onDeleteFabricRollClick: (FabricRoll) -> Unit,
-    onRefresh: () -> Unit,
     onMessageShown: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -105,26 +98,18 @@ private fun InventoryScreen(
 
     SdsScaffold(
         modifier = modifier,
-        topBar = {
-            InventoryAppBar(
-                isRefreshing = uiState.isRefreshing,
-                onRefresh = onRefresh,
-            )
-        },
+        topBar = { InventoryAppBar() },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         contentWindowInsets = WindowInsets.safeDrawingWithBottomNavBar
             .exclude(WindowInsets.ime),
     ) { contentPadding ->
-        RefreshableContent(
+        Box(
             modifier = Modifier.padding(contentPadding),
-            isRefreshing = uiState.isRefreshing,
-            onRefresh = onRefresh,
         ) {
             InventoryContent(
                 modifier = Modifier
                     .fillMaxSize()
                     .hideKeyboardOnClick(),
-                inventorySummaryUiState = uiState.inventorySummary,
                 searchUiState = uiState.search,
                 onQueryChange = onQueryChange,
                 onZoneFilterSelect = onZoneFilterSelect,
@@ -133,7 +118,6 @@ private fun InventoryScreen(
                 onOutboundFabricRollClick = onOutboundFabricRollClick,
                 onEditFabricRollClick = onEditFabricRollClick,
                 onDeleteFabricRollClick = onDeleteFabricRollClick,
-                onRefresh = onRefresh,
             )
         }
     }
@@ -142,25 +126,16 @@ private fun InventoryScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun InventoryAppBar(
-    isRefreshing: Boolean,
-    onRefresh: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     SdsTopAppBar(
         modifier = modifier,
         title = { Text("재고 관리") },
-        actions = {
-            RefreshIcon(
-                isRefreshing = isRefreshing,
-                onClick = onRefresh,
-            )
-        }
     )
 }
 
 @Composable
 private fun InventoryContent(
-    inventorySummaryUiState: InventorySummaryUiState,
     searchUiState: SearchUiState,
     onQueryChange: (String) -> Unit,
     onZoneFilterSelect: (ZoneFilter) -> Unit,
@@ -169,7 +144,6 @@ private fun InventoryContent(
     onDeleteFabricRollClick: (FabricRoll) -> Unit,
     onEditFabricRollClick: (FabricRoll) -> Unit,
     onOutboundFabricRollClick: (FabricRoll) -> Unit,
-    onRefresh: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     BoxWithConstraints(modifier = modifier) {
@@ -180,9 +154,6 @@ private fun InventoryContent(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            InventorySummaryContent(
-                inventorySummaryUiState = inventorySummaryUiState,
-            )
             FilterableSearchInput(
                 query = searchUiState.searchQuery,
                 filters = searchUiState.filters,
@@ -200,7 +171,6 @@ private fun InventoryContent(
                 )
 
                 is UiResult.Error -> ErrorContent(
-                    onRetryClick = onRefresh,
                     modifier = Modifier.weight(1f),
                 )
 
@@ -215,52 +185,6 @@ private fun InventoryContent(
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun InventorySummaryContent(
-    inventorySummaryUiState: InventorySummaryUiState,
-    modifier: Modifier = Modifier,
-) {
-    val inventorySummary = (inventorySummaryUiState.inventorySummary as? UiResult.Success)?.data
-        ?: InventorySummary.EMPTY
-
-    InventorySummaryDashboard(
-        inventorySummary = inventorySummary,
-        lengthUnit = inventorySummaryUiState.lengthUnit,
-        modifier = modifier
-    )
-}
-
-@Composable
-private fun InventorySummaryDashboard(
-    inventorySummary: InventorySummary,
-    lengthUnit: LengthUnit,
-    modifier: Modifier = Modifier,
-) {
-    DashboardGrid(modifier = modifier) {
-        DashboardCard(
-            icon = vectorResource(Icons.Package),
-            title = "총 롤 수",
-            content = inventorySummary.totalRollCount.formatDecimal(),
-            description = "재고 내 원단 롤",
-            modifier = Modifier.weight(1f),
-        )
-        DashboardCard(
-            icon = vectorResource(Icons.Package),
-            title = "총 수량",
-            content = (inventorySummary.totalQuantity * lengthUnit.multiplier).formatDecimal(1) + " ${lengthUnit.abbreviateName}",
-            description = "재고 내 원단 수량",
-            modifier = Modifier.weight(1f),
-        )
-        DashboardCard(
-            icon = vectorResource(Icons.Package),
-            title = "총 구역",
-            content = inventorySummary.totalZoneCount.formatDecimal(),
-            description = "저장 구역",
-            modifier = Modifier.weight(1f),
-        )
     }
 }
 
@@ -287,7 +211,6 @@ private fun FilterableSearchInput(
                     )
                 },
                 singleLine = true,
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
             )
         },
         filterDropdown = {
@@ -323,7 +246,6 @@ private fun ZoneFilterDropdown(
             }
         },
         modifier = modifier,
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
     )
 }
 

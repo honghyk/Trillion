@@ -5,10 +5,7 @@ import trillion.wms.core.model.OutboundHistory
 
 interface RollOutboundHistoryRepository {
 
-    fun getOutboundHistories(
-        rollId: Long,
-        forceFresh: Boolean
-    ): Flow<List<OutboundHistory>>
-
+    fun getOutboundHistories(rollId: Long): Flow<List<OutboundHistory>>
     suspend fun deleteOutboundHistory(id: Long)
+    suspend fun refresh(rollId: Long)
 }

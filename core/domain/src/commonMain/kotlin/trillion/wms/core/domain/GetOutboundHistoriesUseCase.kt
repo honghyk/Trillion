@@ -8,13 +8,7 @@ class GetOutboundHistoriesUseCase(
     private val rollOutboundHistoryRepository: RollOutboundHistoryRepository,
 ) {
 
-    operator fun invoke(
-        rollId: Long,
-        forceFresh: Boolean = false
-    ): Flow<List<OutboundHistory>> {
-        return rollOutboundHistoryRepository.getOutboundHistories(
-            rollId = rollId,
-            forceFresh = forceFresh
-        )
+    operator fun invoke(rollId: Long): Flow<List<OutboundHistory>> {
+        return rollOutboundHistoryRepository.getOutboundHistories(rollId = rollId)
     }
 }

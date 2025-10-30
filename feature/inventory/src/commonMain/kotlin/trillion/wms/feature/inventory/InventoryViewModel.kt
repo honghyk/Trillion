@@ -13,20 +13,18 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import trillion.wms.core.domain.DeleteFabricRollUseCase
-import trillion.wms.core.domain.GetInventoryOverviewStreamUseCase
 import trillion.wms.core.domain.GetZonesStreamUseCase
 import trillion.wms.core.domain.SearchFabricRollsStreamUseCase
 import trillion.wms.core.model.FabricRoll
-import trillion.wms.core.model.InventorySummary
 import trillion.wms.core.ui.model.LengthUnit
 import trillion.wms.core.ui.utils.RefreshableUiResultFlow
 import trillion.wms.core.ui.utils.UiMessageManager
+import trillion.wms.core.ui.utils.asUiResult
 import trillion.wms.feature.inventory.SearchUiState.Filters
 import trillion.wms.feature.inventory.SearchUiState.ZoneFilter
 
 class InventoryViewModel(
     getZonesStream: GetZonesStreamUseCase,
-    getInventoryOverViewStream: GetInventoryOverviewStreamUseCase,
     private val searchFabricRollsStream: SearchFabricRollsStreamUseCase,
     private val deleteFabricRoll: DeleteFabricRollUseCase,
 ) : ViewModel() {
@@ -48,47 +46,27 @@ class InventoryViewModel(
         ::Filters
     )
 
-    private val inventorySummary = RefreshableUiResultFlow(
-        produce = { getInventoryOverViewStream().map { it ?: InventorySummary.EMPTY } }
-    )
-    val searchResults = RefreshableUiResultFlow(
-        produce = {
-            combine(
-                searchQuery.debounce { 300L },
-                selectedZoneFilter,
-                ::Pair
-            ).flatMapLatest { (query, zoneFilter) ->
-                searchFabricRollsStream(
-                    query = query,
-                    zoneId = if (zoneFilter is ZoneFilter.Selected) zoneFilter.zone.id else null
-                )
-            }
-        }
-    )
-
-    private val inventorySummaryUiState = combine(
-        lengthUnit,
-        inventorySummary.flow,
-        ::InventorySummaryUiState
-    )
+    val searchResults = combine(
+        searchQuery.debounce { 300L },
+        selectedZoneFilter,
+        ::Pair
+    ).flatMapLatest { (query, zoneFilter) ->
+        searchFabricRollsStream(
+            query = query,
+            zoneId = zoneFilter.zoneId,
+        )
+    }.asUiResult()
 
     private val searchUiState = combine(
         searchQuery,
         filters,
         lengthUnit,
-        searchResults.flow,
+        searchResults,
         ::SearchUiState
     )
 
-    private val isRefreshing = combine(
-        inventorySummary.isRefreshing,
-        searchResults.isRefreshing
-    ) { refreshingStates -> refreshingStates.any { it } }
-
     val uiState = combine(
-        inventorySummaryUiState,
         searchUiState,
-        isRefreshing,
         uiMessageManager.message,
         ::InventoryUiState
     ).stateIn(
@@ -117,11 +95,6 @@ class InventoryViewModel(
                     onFailure = { uiMessageManager.emitMessage("롤을 삭제하지 못했습니다") }
                 )
         }
-    }
-
-    fun refresh() {
-        searchResults.refresh()
-        inventorySummary.refresh()
     }
 
     fun clearMessage(id: Long) {

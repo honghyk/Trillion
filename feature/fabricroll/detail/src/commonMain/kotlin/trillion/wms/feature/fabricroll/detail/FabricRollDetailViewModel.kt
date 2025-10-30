@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -16,10 +15,10 @@ import trillion.wms.core.domain.GetOutboundHistoriesUseCase
 import trillion.wms.core.domain.GetZoneStreamUseCase
 import trillion.wms.core.domain.GetZoneStreamUseCase.Params
 import trillion.wms.core.domain.RefreshFabricRollUseCase
+import trillion.wms.core.domain.RefreshOutboundHistoriesUseCase
 import trillion.wms.core.model.OutboundHistory
 import trillion.wms.core.model.Zone
 import trillion.wms.core.ui.model.LengthUnit
-import trillion.wms.core.ui.utils.RefreshableUiResultFlow
 import trillion.wms.core.ui.utils.UiMessageManager
 import trillion.wms.core.ui.utils.asUiResult
 import trillion.wms.core.ui.utils.combine
@@ -31,6 +30,7 @@ class FabricRollDetailViewModel(
     private val rollId: Long,
     private val deleteOutboundHistory: DeleteOutboundHistoryUseCase,
     private val refreshFabricRoll: RefreshFabricRollUseCase,
+    private val refreshOutboundHistories: RefreshOutboundHistoriesUseCase,
 ) : ViewModel() {
 
     private val uiMessageManager = UiMessageManager()
@@ -44,18 +44,17 @@ class FabricRollDetailViewModel(
         .map { requireNotNull(it) }
         .asUiResult()
 
-    private val outboundHistories = RefreshableUiResultFlow(
-        produce = { getOutboundHistoriesStream(rollId, forceFresh = true) }
-    )
+    private val outboundHistories = getOutboundHistoriesStream(rollId).asUiResult()
+
     private val isRefreshing = combine(
         refreshFabricRoll.inProgress,
-        outboundHistories.isRefreshing,
+        refreshOutboundHistories.inProgress,
     ) { refreshingStates -> refreshingStates.any { it } }
 
     val uiState: StateFlow<FabricRollDetailUiState> = combine(
         zone,
         fabricRoll,
-        outboundHistories.flow,
+        outboundHistories,
         lengthUnit,
         isRefreshing,
         uiMessageManager.message,
@@ -74,7 +73,9 @@ class FabricRollDetailViewModel(
         viewModelScope.launch {
             refreshFabricRoll(RefreshFabricRollUseCase.Params(rollId, fromUser))
         }
-        outboundHistories.refresh()
+        viewModelScope.launch {
+            refreshOutboundHistories(RefreshOutboundHistoriesUseCase.Params(rollId, fromUser))
+        }
     }
 
     fun updateLengthUnit(lengthUnit: LengthUnit) {

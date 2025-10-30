@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import org.mobilenativefoundation.store.store5.StoreReadRequest
 import org.mobilenativefoundation.store.store5.StoreReadResponse
+import org.mobilenativefoundation.store.store5.impl.extensions.fresh
 import org.mobilenativefoundation.store.store5.impl.extensions.get
 import trillion.wms.core.data.repository.api.FabricRollsRepository
 import trillion.wms.core.data.store.FabricRollStore
@@ -62,10 +63,10 @@ internal class DefaultFabricRollsRepository(
     }
 
     override suspend fun refresh(id: Long) {
-        fabricRollStore.get(id)
+        fabricRollStore.fresh(id)
     }
 
     override suspend fun refreshAllInZone(zoneId: Long) {
-        fabricRollsStore.get(zoneId)
+        fabricRollsStore.fresh(zoneId)
     }
 }

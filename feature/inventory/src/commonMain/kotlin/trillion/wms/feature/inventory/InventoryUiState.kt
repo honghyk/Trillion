@@ -9,15 +9,8 @@ import trillion.wms.core.ui.utils.UiMessage
 
 
 data class InventoryUiState(
-    val inventorySummary: InventorySummaryUiState = InventorySummaryUiState(),
     val search: SearchUiState = SearchUiState(),
-    val isRefreshing: Boolean = false,
     val message: UiMessage? = null,
-)
-
-data class InventorySummaryUiState(
-    val lengthUnit: LengthUnit = LengthUnit.METER,
-    val inventorySummary: UiResult<InventorySummary> = UiResult.Loading,
 )
 
 data class SearchUiState(
@@ -37,3 +30,6 @@ data class SearchUiState(
         data class Selected(val zone: Zone) : ZoneFilter
     }
 }
+
+val SearchUiState.ZoneFilter.zoneId: Long?
+    get() = (this as? SearchUiState.ZoneFilter.Selected)?.zone?.id
