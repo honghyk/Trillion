@@ -47,7 +47,7 @@ fun FabricRollEntity.toDomain() = FabricRoll(
     remainingQuantity = remainingQuantity,
     quantity = quantity,
     remark = remark.orEmpty(),
-    createdAt = createdAt
+    inboundAt = createdAt
 )
 
 fun FabricRoll.toEntity() = FabricRollEntity(
@@ -61,5 +61,5 @@ fun FabricRoll.toEntity() = FabricRollEntity(
     remainingQuantity = remainingQuantity,
     quantity = quantity,
     remark = remark,
-    createdAt = createdAt
+    createdAt = inboundAt
 )

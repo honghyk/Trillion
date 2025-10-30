@@ -13,7 +13,7 @@ data class FabricRoll(
     val remark: String,
     val remainingQuantity: Double,
     val quantity: Double,
-    val createdAt: Instant
+    val inboundAt: Instant
 )
 
 val FabricRoll.outboundQuantity: Double

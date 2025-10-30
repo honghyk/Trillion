@@ -344,7 +344,7 @@ private fun FabricRollInfoCard(
                 DetailItemWithIcon(
                     icon = vectorResource(Icons.Calendar),
                     label = "추가일",
-                    value = InstantFormatter.formatDottedDate(fabricRoll.createdAt)
+                    value = InstantFormatter.formatDottedDate(fabricRoll.inboundAt)
                 )
             }
             RemarkItem(remark = fabricRoll.remark)

@@ -1,5 +1,7 @@
 package trillion.wms.core.model
 
+import kotlin.time.Instant
+
 sealed interface FabricRollMutationRequest {
     val id: Long
 }
@@ -14,6 +16,7 @@ data class AddFabricRollRequest(
     val finish: String?,
     val remark: String?,
     val quantity: Double,
+    val inboundAt: Instant,
 ) : FabricRollMutationRequest
 
 data class UpdateFabricRollRequest(
@@ -26,4 +29,5 @@ data class UpdateFabricRollRequest(
     val finish: String?,
     val remark: String?,
     val quantity: Double?,
+    val inboundAt: Instant?,
 ) : FabricRollMutationRequest

@@ -7,7 +7,7 @@ import androidx.navigation.compose.navigation
 import trillion.wms.app.shared.component.MainTab
 import trillion.wms.app.shared.component.NavHostWithSharedXAxis
 import trillion.wms.app.shared.destination.fabricRollDetailDestination
-import trillion.wms.app.shared.destination.fabricRollFormDialogDestination
+import trillion.wms.app.shared.destination.fabricRollFormDestination
 import trillion.wms.app.shared.destination.fabricRollOutboundFormDialogDestination
 import trillion.wms.app.shared.destination.inventoryDestination
 import trillion.wms.app.shared.destination.zoneDestinations
@@ -78,7 +78,7 @@ fun TrillionNavHost(
             )
         }
 
-        fabricRollFormDialogDestination(
+        fabricRollFormDestination(
             onDismiss = { navController.popBackStack() },
         )
 

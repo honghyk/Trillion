@@ -11,6 +11,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
 import trillion.wms.core.domain.AddFabricRollUseCase
 import trillion.wms.core.domain.GetFabricRollStreamUseCase
 import trillion.wms.core.domain.GetZonesStreamUseCase
@@ -122,6 +124,14 @@ class FabricRollFormViewModel(
         }
     }
 
+    fun updateDate(value: String) {
+        _uiState.update { uiState ->
+            uiState.copy(
+                inboundDateField = uiState.inboundDateField.copy(value = value)
+            )
+        }
+    }
+
     fun submit() {
         val currentState = uiState.value
         if (currentState.formSubmitState == FormSubmitState.IN_PROGRESS) return
@@ -163,6 +173,9 @@ class FabricRollFormViewModel(
         val remark = currentState.remarkField.value
         val quantity =
             currentState.quantityField.value.toDouble() / currentState.lengthUnit.multiplier
+        val dateFormat = currentState.inboundDateField.format
+        val dateInput = currentState.inboundDateField.value
+        val inboundDate = dateFormat.parse(dateInput).atStartOfDayIn(TimeZone.currentSystemDefault())
 
         return if (isInEditMode) {
             UpdateFabricRollRequest(
@@ -175,6 +188,7 @@ class FabricRollFormViewModel(
                 finish = finish,
                 remark = remark,
                 quantity = quantity,
+                inboundAt = inboundDate,
             )
         } else {
             AddFabricRollRequest(
@@ -187,6 +201,7 @@ class FabricRollFormViewModel(
                 finish = finish,
                 remark = remark,
                 quantity = quantity,
+                inboundAt = inboundDate,
             )
         }
     }

@@ -17,7 +17,7 @@ data class FabricRollDto(
     val quantity: Double,
     @SerialName("remaining_quantity") val remainingQuantity: Double,
     val remark: String? = null,
-    @SerialName("created_at") val createdAt: String,
+    @SerialName("inbound_at") val inboundAt: String,
     @SerialName("updated_at") val updatedAt: String,
 )
 
@@ -33,7 +33,7 @@ fun FabricRollDto.toDomain(): FabricRoll {
         quantity = this.quantity,
         remainingQuantity = this.remainingQuantity,
         remark = this.remark ?: "",
-        createdAt = Instant.parse(this.createdAt)
+        inboundAt = Instant.parse(this.inboundAt)
     )
 }
 

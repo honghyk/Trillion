@@ -1,18 +1,18 @@
 package trillion.wms.app.shared.destination
 
 import androidx.navigation.NavGraphBuilder
-import androidx.navigation.compose.dialog
+import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import trillion.wms.app.shared.route.FabricRollForm
-import trillion.wms.feature.fabricroll.form.FabricRollFormDialog
+import trillion.wms.feature.fabricroll.form.FabricRollFormScreen
 
-fun NavGraphBuilder.fabricRollFormDialogDestination(
+fun NavGraphBuilder.fabricRollFormDestination(
     onDismiss: () -> Unit,
 ) {
-    dialog<FabricRollForm> { backStackEntry ->
+    composable<FabricRollForm> { backStackEntry ->
         val args = backStackEntry.toRoute<FabricRollForm>()
 
-        FabricRollFormDialog(
+        FabricRollFormScreen(
             zoneId = args.zoneId,
             rollId = args.rollId,
             onDismiss = onDismiss,

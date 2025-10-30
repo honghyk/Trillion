@@ -101,7 +101,7 @@ class InMemoryFabricRollsRepository : FabricRollsRepository {
         remark = remark.orEmpty(),
         quantity = quantity,
         remainingQuantity = quantity,
-        createdAt = Clock.System.now()
+        inboundAt = Clock.System.now()
     )
 
     private fun FabricRoll.update(request: UpdateFabricRollRequest) = copy(
@@ -158,7 +158,7 @@ class InMemoryFabricRollsRepository : FabricRollsRepository {
                     remark = if (random.nextDouble() > 0.7) "Remark for item #$i" else "",
                     quantity = quantity,
                     remainingQuantity = quantity,
-                    createdAt = Instant.fromEpochSeconds(randomTimestamp)
+                    inboundAt = Instant.fromEpochSeconds(randomTimestamp)
                 )
             )
         }

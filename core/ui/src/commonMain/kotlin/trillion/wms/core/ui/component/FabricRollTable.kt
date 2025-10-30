@@ -36,7 +36,7 @@ fun FabricRollTable(
                 4 -> HeaderCell(text = "Factory")
                 5 -> HeaderCell(text = "Finish")
                 6 -> HeaderCell(text = "Qty (${lengthUnit.unitName})")
-                7 -> HeaderCell(text = "추가일")
+                7 -> HeaderCell(text = "입고일")
                 8 -> HeaderCell(text = "")
                 9 -> HeaderCell(text = "Remark")
             }
@@ -53,7 +53,7 @@ fun FabricRollTable(
                     text = (fabricRoll.remainingQuantity * lengthUnit.multiplier).formatDecimal(1)
                 )
 
-                7 -> TextCell(text = InstantFormatter.formatDottedDate(fabricRoll.createdAt))
+                7 -> TextCell(text = InstantFormatter.formatDottedDate(fabricRoll.inboundAt))
                 8 -> DataRowCell {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         actionsCell(this, fabricRoll)
