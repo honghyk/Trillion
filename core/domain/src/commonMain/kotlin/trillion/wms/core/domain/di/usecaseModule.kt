@@ -25,4 +25,6 @@ val usecaseModule = module {
     factoryOf(::UpdateFabricRollUseCase)
     factoryOf(::RefreshZonesUseCase)
     factoryOf(::RefreshZoneUseCase)
+    factoryOf(::RefreshFabricRollUseCase)
+    factoryOf(::RefreshFabricRollsUseCase)
 }

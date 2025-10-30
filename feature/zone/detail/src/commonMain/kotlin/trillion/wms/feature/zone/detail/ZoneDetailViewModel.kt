@@ -2,25 +2,25 @@ package trillion.wms.feature.zone.detail
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import trillion.wms.core.domain.DeleteFabricRollUseCase
+import trillion.wms.core.domain.GetFabricRollsStreamUseCase
 import trillion.wms.core.domain.GetZoneStreamUseCase
 import trillion.wms.core.domain.GetZoneStreamUseCase.Params
+import trillion.wms.core.domain.RefreshFabricRollsUseCase
 import trillion.wms.core.domain.RefreshZoneUseCase
-import trillion.wms.core.domain.RefreshZonesUseCase
-import trillion.wms.core.domain.SearchFabricRollsStreamUseCase
 import trillion.wms.core.model.FabricRoll
 import trillion.wms.core.ui.model.LengthUnit
-import trillion.wms.core.ui.utils.RefreshableUiResultFlow
 import trillion.wms.core.ui.utils.UiMessageManager
 import trillion.wms.core.ui.utils.asUiResult
 import trillion.wms.core.ui.utils.cancellableRunCatching
@@ -28,9 +28,10 @@ import trillion.wms.core.ui.utils.combine
 
 class ZoneDetailViewModel(
     getZoneStream: GetZoneStreamUseCase,
-    searchFabricRollsStream: SearchFabricRollsStreamUseCase,
+    getFabricRollsStream: GetFabricRollsStreamUseCase,
     private val zoneId: Long,
     private val refreshZone: RefreshZoneUseCase,
+    private val refreshFabricRolls: RefreshFabricRollsUseCase,
     private val deleteFabricRoll: DeleteFabricRollUseCase,
 ) : ViewModel() {
 
@@ -42,21 +43,28 @@ class ZoneDetailViewModel(
         .map { requireNotNull(it) }
         .asUiResult()
 
-    private val fabricRolls = RefreshableUiResultFlow(
-        produce = {
-            searchQuery
-                .debounce { 300L }
-                .flatMapLatest { searchFabricRollsStream(it, zoneId) }
+    private val fabricRolls = searchQuery
+        .debounce { 300L }
+        .flatMapLatest { query ->
+            getFabricRollsStream(zoneId).map { fabricRolls ->
+                if (query.isEmpty()) {
+                    fabricRolls
+                } else {
+                    fabricRolls.filterByQuery(query)
+                }
+            }
         }
-    )
+        .flowOn(Dispatchers.Default)
+        .asUiResult()
+
     private val isRefreshing = combine(
         refreshZone.inProgress,
-        fabricRolls.isRefreshing,
+        refreshFabricRolls.inProgress,
     ) { refreshingStates -> refreshingStates.any { it } }
 
     val uiState: StateFlow<ZoneDetailUiState> = combine(
         zone,
-        fabricRolls.flow,
+        fabricRolls,
         searchQuery,
         lengthUnit,
         isRefreshing,
@@ -74,9 +82,11 @@ class ZoneDetailViewModel(
 
     fun refresh(fromUser: Boolean) {
         viewModelScope.launch {
-            refreshZone(RefreshZoneUseCase.Params(zoneId, isUserInitiated = fromUser))
+            refreshZone(RefreshZoneUseCase.Params(zoneId, fromUser))
         }
-        fabricRolls.refresh()
+        viewModelScope.launch {
+            refreshFabricRolls(RefreshFabricRollsUseCase.Params(zoneId, fromUser))
+        }
     }
 
     fun updateLengthUnit(lengthUnit: LengthUnit) {
@@ -99,5 +109,16 @@ class ZoneDetailViewModel(
 
     fun clearMessage(id: Long) {
         uiMessageManager.clearMessage(id)
+    }
+
+    private fun List<FabricRoll>.filterByQuery(query: String): List<FabricRoll> {
+        return filter { fabricRoll ->
+            fabricRoll.id.toString().contains(query) ||
+                    fabricRoll.itemNo.contains(query) ||
+                    fabricRoll.orderNo.contains(query) ||
+                    fabricRoll.color.contains(query) ||
+                    fabricRoll.factory.contains(query) ||
+                    fabricRoll.finish.contains(query)
+        }
     }
 }

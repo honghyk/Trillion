@@ -8,7 +8,7 @@ class GetFabricRollStreamUseCase(
     private val fabricRollsRepository: FabricRollsRepository,
 ) {
 
-    operator fun invoke(id: Long, forceRefresh: Boolean = false): Flow<FabricRoll?> {
-        return fabricRollsRepository.getFabricRoll(id, forceRefresh)
+    operator fun invoke(id: Long): Flow<FabricRoll?> {
+        return fabricRollsRepository.getFabricRoll(id)
     }
 }

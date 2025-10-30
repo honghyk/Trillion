@@ -2,10 +2,9 @@ package trillion.wms.core.database.dao
 
 import androidx.room.Dao
 import androidx.room.Delete
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 import trillion.wms.core.database.model.FabricRollEntity
 
@@ -38,14 +37,11 @@ internal interface FabricRollDao {
     )
     fun searchFabricRolls(query: String, zoneId: Long?): Flow<List<FabricRollEntity>>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(fabricRoll: FabricRollEntity): Long
+    @Upsert
+    suspend fun upsert(fabricRoll: FabricRollEntity): Long
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAll(fabricRolls: List<FabricRollEntity>)
-
-    @Update
-    suspend fun update(fabricRoll: FabricRollEntity)
+    @Upsert
+    suspend fun upsertAll(fabricRolls: List<FabricRollEntity>)
 
     @Query("UPDATE fabric_rolls SET remaining_quantity = :remainingQuantity WHERE id = :id")
     suspend fun updateRemainingQuantity(id: Long, remainingQuantity: Double)

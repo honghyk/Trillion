@@ -17,12 +17,10 @@ interface FabricRollLocalDataSource {
     fun getAllFabricRollsStream(): Flow<List<FabricRoll>>
     fun getFabricRollsStreamByZoneId(zoneId: Long): Flow<List<FabricRoll>>
     fun searchFabricRolls(query: String, zoneId: Long?): Flow<List<FabricRoll>>
-    suspend fun insert(fabricRoll: FabricRoll): Long
-    suspend fun insertAll(fabricRolls: List<FabricRoll>)
-    suspend fun update(fabricRoll: FabricRoll)
+    suspend fun upsert(fabricRoll: FabricRoll)
+    suspend fun upsertAll(fabricRolls: List<FabricRoll>)
     suspend fun delete(fabricRoll: FabricRoll)
     suspend fun deleteById(id: Long)
-    suspend fun deleteByZoneId(zoneId: Long)
     suspend fun clearAll()
 
     suspend fun recordOutbound(history: OutboundHistory)
@@ -56,16 +54,12 @@ internal class RoomFabricRollLocalDataSource(
         }
     }
 
-    override suspend fun insert(fabricRoll: FabricRoll): Long {
-        return fabricRollDao.insert(fabricRoll.toEntity())
+    override suspend fun upsert(fabricRoll: FabricRoll) {
+        fabricRollDao.upsert(fabricRoll.toEntity())
     }
 
-    override suspend fun insertAll(fabricRolls: List<FabricRoll>) {
-        fabricRollDao.insertAll(fabricRolls.map { it.toEntity() })
-    }
-
-    override suspend fun update(fabricRoll: FabricRoll) {
-        fabricRollDao.update(fabricRoll.toEntity())
+    override suspend fun upsertAll(fabricRolls: List<FabricRoll>) {
+        fabricRollDao.upsertAll(fabricRolls.map { it.toEntity() })
     }
 
     override suspend fun delete(fabricRoll: FabricRoll) {
@@ -74,10 +68,6 @@ internal class RoomFabricRollLocalDataSource(
 
     override suspend fun deleteById(id: Long) {
         fabricRollDao.deleteById(id)
-    }
-
-    override suspend fun deleteByZoneId(zoneId: Long) {
-        fabricRollDao.deleteByZoneId(zoneId)
     }
 
     override suspend fun clearAll() {

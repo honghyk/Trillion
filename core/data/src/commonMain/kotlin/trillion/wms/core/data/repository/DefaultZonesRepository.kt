@@ -9,10 +9,9 @@ import kotlinx.coroutines.flow.map
 import org.mobilenativefoundation.store.store5.StoreReadRequest
 import org.mobilenativefoundation.store.store5.StoreReadResponse
 import org.mobilenativefoundation.store.store5.impl.extensions.fresh
-import org.mobilenativefoundation.store.store5.impl.extensions.get
 import trillion.wms.core.data.repository.api.ZonesRepository
-import trillion.wms.core.data.repository.store.AllZonesStore
-import trillion.wms.core.data.repository.store.ZoneStore
+import trillion.wms.core.data.store.ZonesStore
+import trillion.wms.core.data.store.ZoneStore
 import trillion.wms.core.database.datasource.FabricRollLocalDataSource
 import trillion.wms.core.database.datasource.ZoneLocalDataSource
 import trillion.wms.core.model.CreateZoneRequest
@@ -25,15 +24,14 @@ internal class DefaultZonesRepository(
     private val zoneRemoteDataSource: ZoneRemoteDataSource,
     private val fabricRollLocalDataSource: FabricRollLocalDataSource,
     private val zoneStore: ZoneStore,
-    private val allZonesStore: AllZonesStore,
+    private val zonesStore: ZonesStore,
 ) : ZonesRepository {
 
     override fun getZoneStream(id: Long): Flow<Zone?> {
         return zoneStore
             .stream(StoreReadRequest.cached(id, refresh = false))
             .filter { it is StoreReadResponse.Data }
-            .map { response -> response.dataOrNull() }
-            .distinctUntilChanged()
+            .map { it.requireData() }
     }
 
     override fun getZoneByRollIdStream(rollId: Long): Flow<Zone?> {
@@ -48,7 +46,7 @@ internal class DefaultZonesRepository(
     }
 
     override fun getZonesStream(): Flow<List<Zone>> {
-        return allZonesStore
+        return zonesStore
             .stream(StoreReadRequest.cached(Unit, refresh = false))
             .filter { it is StoreReadResponse.Data }
             .map { it.requireData() }
@@ -74,6 +72,6 @@ internal class DefaultZonesRepository(
     }
 
     override suspend fun refreshAll() {
-        allZonesStore.fresh(Unit)
+        zonesStore.fresh(Unit)
     }
 }

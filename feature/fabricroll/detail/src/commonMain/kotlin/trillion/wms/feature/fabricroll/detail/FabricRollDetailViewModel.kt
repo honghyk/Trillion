@@ -15,19 +15,22 @@ import trillion.wms.core.domain.GetFabricRollStreamUseCase
 import trillion.wms.core.domain.GetOutboundHistoriesUseCase
 import trillion.wms.core.domain.GetZoneStreamUseCase
 import trillion.wms.core.domain.GetZoneStreamUseCase.Params
+import trillion.wms.core.domain.RefreshFabricRollUseCase
 import trillion.wms.core.model.OutboundHistory
 import trillion.wms.core.model.Zone
 import trillion.wms.core.ui.model.LengthUnit
 import trillion.wms.core.ui.utils.RefreshableUiResultFlow
 import trillion.wms.core.ui.utils.UiMessageManager
+import trillion.wms.core.ui.utils.asUiResult
 import trillion.wms.core.ui.utils.combine
 
 class FabricRollDetailViewModel(
-    rollId: Long,
     getZoneStream: GetZoneStreamUseCase,
     getFabricRollStream: GetFabricRollStreamUseCase,
     getOutboundHistoriesStream: GetOutboundHistoriesUseCase,
+    private val rollId: Long,
     private val deleteOutboundHistory: DeleteOutboundHistoryUseCase,
+    private val refreshFabricRoll: RefreshFabricRollUseCase,
 ) : ViewModel() {
 
     private val uiMessageManager = UiMessageManager()
@@ -37,23 +40,21 @@ class FabricRollDetailViewModel(
     private val zone = getZoneStream(Params.RollId(rollId))
         .map { it ?: Zone.EMPTY }
 
-    private val fabricRoll = RefreshableUiResultFlow(
-        produce = {
-            getFabricRollStream(rollId, forceRefresh = true)
-                .map { requireNotNull(it) }
-        }
-    )
+    private val fabricRoll = getFabricRollStream(rollId)
+        .map { requireNotNull(it) }
+        .asUiResult()
+
     private val outboundHistories = RefreshableUiResultFlow(
         produce = { getOutboundHistoriesStream(rollId, forceFresh = true) }
     )
     private val isRefreshing = combine(
-        fabricRoll.isRefreshing,
+        refreshFabricRoll.inProgress,
         outboundHistories.isRefreshing,
     ) { refreshingStates -> refreshingStates.any { it } }
 
     val uiState: StateFlow<FabricRollDetailUiState> = combine(
         zone,
-        fabricRoll.flow,
+        fabricRoll,
         outboundHistories.flow,
         lengthUnit,
         isRefreshing,
@@ -65,8 +66,14 @@ class FabricRollDetailViewModel(
         FabricRollDetailUiState()
     )
 
-    fun refresh() {
-        fabricRoll.refresh()
+    init {
+        refresh(false)
+    }
+
+    fun refresh(fromUser: Boolean) {
+        viewModelScope.launch {
+            refreshFabricRoll(RefreshFabricRollUseCase.Params(rollId, fromUser))
+        }
         outboundHistories.refresh()
     }
 

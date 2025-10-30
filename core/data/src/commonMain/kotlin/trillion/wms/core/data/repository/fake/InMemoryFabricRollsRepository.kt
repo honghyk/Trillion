@@ -1,5 +1,6 @@
 package trillion.wms.core.data.repository.fake
 
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -22,17 +23,13 @@ class InMemoryFabricRollsRepository : FabricRollsRepository {
     private val fabricRolls = MutableStateFlow(generateFakeFabricRolls(1000))
     private val outboundHistories = MutableStateFlow<List<OutboundHistory>>(emptyList())
 
-    override fun getFabricRoll(id: Long, forceFresh: Boolean): Flow<FabricRoll?> {
+    override fun getFabricRoll(id: Long): Flow<FabricRoll?> {
         return fabricRolls.map { rolls -> rolls.firstOrNull { it.id == id } }
     }
 
     override fun getFabricRolls(zoneId: Long, forceFresh: Boolean): Flow<List<FabricRoll>> {
         return fabricRolls
             .map { rolls -> rolls.filter { it.zoneId == zoneId } }
-    }
-
-    override fun getAllFabricRolls(forceFresh: Boolean): Flow<List<FabricRoll>> {
-        return fabricRolls
     }
 
     override suspend fun addFabricRoll(request: AddFabricRollRequest): FabricRoll {
@@ -83,6 +80,14 @@ class InMemoryFabricRollsRepository : FabricRollsRepository {
                 createdAt = Clock.System.now()
             )
         }
+    }
+
+    override suspend fun refresh(id: Long) {
+        delay(500L)
+    }
+
+    override suspend fun refreshAllInZone(zoneId: Long) {
+        delay(500L)
     }
 
     private fun AddFabricRollRequest.toFabricRoll() = FabricRoll(

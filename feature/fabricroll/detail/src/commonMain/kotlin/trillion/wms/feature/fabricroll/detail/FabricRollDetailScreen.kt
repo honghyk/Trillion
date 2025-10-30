@@ -82,7 +82,7 @@ fun FabricRollDetailScreen(
     FabricRollDetailScreen(
         uiState = uiState,
         onNavigateUp = onBackClick,
-        onRefresh = viewModel::refresh,
+        onRefresh = { viewModel.refresh(true) },
         onLengthUnitSelected = viewModel::updateLengthUnit,
         onEditFabricRollClick = { roll -> onEditFabricRollClick(roll.id) },
         onOutboundFabricRollClick = { roll -> onOutboundFabricRollClick(roll.id) },

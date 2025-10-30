@@ -1,6 +1,7 @@
 package trillion.wms.core.data.repository
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onStart
 import trillion.wms.core.data.repository.api.SearchRepository
 import trillion.wms.core.database.datasource.FabricRollLocalDataSource
@@ -13,13 +14,17 @@ class DefaultSearchRepository(
 ) : SearchRepository {
 
     override fun searchFabricRolls(query: String, zoneId: Long?): Flow<List<FabricRoll>> {
-        return fabricRollLocalDataSource.searchFabricRolls(query = query, zoneId = zoneId)
-            .onStart {
-                try {
-                    val remoteResults = fabricRollRemoteDataSource.searchFabricRolls(query, zoneId)
-                    fabricRollLocalDataSource.insertAll(remoteResults)
-                } catch (_: Exception) {
+        return if (query.isEmpty()) {
+            flowOf(emptyList())
+        } else {
+            fabricRollLocalDataSource.searchFabricRolls(query = query, zoneId = zoneId)
+                .onStart {
+                    try {
+                        val results = fabricRollRemoteDataSource.searchFabricRolls(query, zoneId)
+                        fabricRollLocalDataSource.upsertAll(results)
+                    } catch (_: Exception) {
+                    }
                 }
-            }
+        }
     }
 }

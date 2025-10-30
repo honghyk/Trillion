@@ -1,18 +1,21 @@
 package trillion.wms.core.data.repository.fake
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import trillion.wms.core.data.repository.api.FabricRollsRepository
 import trillion.wms.core.data.repository.api.SearchRepository
+import trillion.wms.core.database.datasource.FabricRollLocalDataSource
 import trillion.wms.core.model.FabricRoll
 
 class InMemorySearchRepository(
     private val fabricRollsRepository: FabricRollsRepository,
+    private val fabricRollsLocalDataSource: FabricRollLocalDataSource,
 ) : SearchRepository {
 
     override fun searchFabricRolls(query: String, zoneId: Long?): Flow<List<FabricRoll>> {
         return if (zoneId == null) {
-            fabricRollsRepository.getAllFabricRolls()
+            fabricRollsLocalDataSource.getAllFabricRollsStream()
         } else {
             fabricRollsRepository.getFabricRolls(zoneId)
         }.map { fabricRolls ->
