@@ -5,20 +5,43 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import trillion.wms.core.domain.CreateZoneUseCase
+import trillion.wms.core.domain.GetZoneStreamUseCase
+import trillion.wms.core.domain.UpdateZoneUseCase
 import trillion.wms.core.model.CreateZoneRequest
+import trillion.wms.core.model.UpdateZoneRequest
 import trillion.wms.core.model.exception.AlreadyExistsException
 import trillion.wms.core.ui.model.FormSubmitState
-import trillion.wms.core.ui.utils.cancellableRunCatching
 
 class ZoneFormViewModel(
-    private val createZoneUseCase: CreateZoneUseCase,
+    private val zoneId: Long?,
+    private val getZoneStream: GetZoneStreamUseCase,
+    private val createZone: CreateZoneUseCase,
+    private val updateZone: UpdateZoneUseCase,
 ) : ViewModel() {
+    private val isEditMode = zoneId != null
 
-    private val _uiState = MutableStateFlow(ZoneFormUiState())
+    private val _uiState = MutableStateFlow(ZoneFormUiState(isEditMode = isEditMode))
     val uiState: StateFlow<ZoneFormUiState> = _uiState.asStateFlow()
+
+    init {
+        if (zoneId != null) {
+            loadZone(zoneId)
+        }
+    }
+
+    private fun loadZone(zoneId: Long) {
+        viewModelScope.launch {
+            getZoneStream(GetZoneStreamUseCase.Params.ZoneId(zoneId))
+                .collectLatest {
+                    updateNameField(it?.name.orEmpty())
+                    updateDescriptionField(it?.description.orEmpty())
+                }
+        }
+    }
 
     fun updateNameField(value: String) {
         _uiState.update { uiState ->
@@ -41,20 +64,30 @@ class ZoneFormViewModel(
 
     fun submit() {
         val currentState = _uiState.value
-        if (currentState.formSubmitState == FormSubmitState.IN_PROGRESS) {
-            return
-        }
+        if (currentState.formSubmitState == FormSubmitState.IN_PROGRESS) return
+
         viewModelScope.launch {
             _uiState.update { it.copy(formSubmitState = FormSubmitState.IN_PROGRESS) }
 
-            val request = CreateZoneRequest(
-                name = currentState.nameField.value,
-                description = currentState.descriptionField.value,
-            )
-            createZoneUseCase(request)
+            val result = if (isEditMode) {
+                val request = UpdateZoneRequest(
+                    id = zoneId!!,
+                    name = currentState.nameField.value,
+                    description = currentState.descriptionField.value,
+                )
+                updateZone(UpdateZoneUseCase.Params(request))
+            } else {
+                val request = CreateZoneRequest(
+                    name = currentState.nameField.value,
+                    description = currentState.descriptionField.value,
+                )
+                createZone(CreateZoneUseCase.Params(request))
+            }
+
+            result
                 .fold(
                     onSuccess = { handleSuccessfulSubmit() },
-                    onFailure = { e -> handleSubmitFailure(e) }
+                    onFailure = { handleSubmitFailure(it) }
                 )
         }
     }

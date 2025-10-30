@@ -7,25 +7,31 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuBoxScope
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.MenuDefaults
-import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,9 +42,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.vectorResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import trillion.wms.core.designsystem.theme.SdsTheme
 
 @Composable
@@ -184,6 +192,7 @@ fun SdsDropdownMenuItem(
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource? = null,
     shape: Shape = RoundedCornerShape(4.dp),
+    leadingIcon: @Composable (() -> Unit)? = null,
 ) {
     val interactionSource = interactionSource ?: remember { MutableInteractionSource() }
     Row(
@@ -196,15 +205,26 @@ fun SdsDropdownMenuItem(
                 indication = ripple(),
             )
             .clip(shape)
-            .padding(
-                top = 6.dp, bottom = 6.dp,
-                start = 8.dp, end = 32.dp
-            ),
+            .sizeIn(
+                minWidth = 112.dp,
+                maxWidth = 280.dp,
+                minHeight = 48.dp
+            )
+            .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        ProvideTextStyle(
-            SdsTheme.typography.bodySmall,
-            content = text
-        )
+        if (leadingIcon != null) {
+            Box(Modifier.size(16.dp)) {
+                leadingIcon()
+            }
+        }
+        Box(
+            Modifier.weight(1f)
+                .padding(
+                    start = if (leadingIcon != null) 8.dp else 0.dp,
+                )
+        ) {
+            text()
+        }
     }
 }

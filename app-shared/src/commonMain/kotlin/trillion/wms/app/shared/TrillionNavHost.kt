@@ -38,6 +38,9 @@ fun TrillionNavHost(
                 onBackClick = { navController.popBackStack() },
                 onZoneItemClick = { navController.navigate(ZoneDetail(it)) },
                 onAddZoneClick = { navController.navigate(ZoneForm(null)) },
+                onEditZoneClick = { zoneId ->
+                    navController.navigate(ZoneForm(zoneId))
+                },
                 onAddFabricRollClick = { zoneId ->
                     navController.navigate(FabricRollForm.add(zoneId))
                 },

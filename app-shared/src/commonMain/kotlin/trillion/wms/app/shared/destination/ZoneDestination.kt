@@ -1,7 +1,5 @@
 package trillion.wms.app.shared.destination
 
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.dialog
@@ -18,6 +16,7 @@ fun NavGraphBuilder.zoneDestinations(
     onBackClick: () -> Unit,
     onZoneItemClick: (Long) -> Unit,
     onAddZoneClick: () -> Unit,
+    onEditZoneClick: (Long) -> Unit,
     onAddFabricRollClick: (Long) -> Unit,
     onEditFabricRollClick: (Long) -> Unit,
     onOutboundFabricRollClick: (Long) -> Unit,
@@ -26,6 +25,7 @@ fun NavGraphBuilder.zoneDestinations(
     zoneListDestination(
         onZoneItemClick = onZoneItemClick,
         onAddZoneClick = onAddZoneClick,
+        onEditZoneClick = onEditZoneClick,
     )
 
     zoneDetailDestination(
@@ -44,11 +44,13 @@ fun NavGraphBuilder.zoneDestinations(
 fun NavGraphBuilder.zoneListDestination(
     onZoneItemClick: (Long) -> Unit,
     onAddZoneClick: () -> Unit,
+    onEditZoneClick: (Long) -> Unit,
 ) {
     mainTabComposable<ZoneList> {
         ZoneListScreen(
             onZoneItemClick = onZoneItemClick,
             onAddZoneClick = onAddZoneClick,
+            onEditZoneClick = onEditZoneClick,
         )
     }
 }
@@ -78,9 +80,10 @@ fun NavGraphBuilder.zoneFormDialogDestination(
     onDismiss: () -> Unit,
 ) {
     dialog<ZoneForm> { backStackEntry ->
-        val args = backStackEntry.toRoute<ZoneForm>() // need in implement edit
+        val args = backStackEntry.toRoute<ZoneForm>()
 
         ZoneFormDialog(
+            zoneId = args.zoneId,
             onDismiss = onDismiss,
         )
     }

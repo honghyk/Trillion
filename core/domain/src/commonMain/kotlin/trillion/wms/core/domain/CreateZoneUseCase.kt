@@ -6,9 +6,11 @@ import trillion.wms.core.model.CreateZoneRequest
 
 class CreateZoneUseCase(
     private val zoneRepository: ZonesRepository
-) {
+): Interactor<CreateZoneUseCase.Params, Unit>() {
 
-    suspend operator fun invoke(request: CreateZoneRequest) = cancellableRunCatching {
-        zoneRepository.createZone(request)
+    override suspend fun doWork(params: Params) {
+        zoneRepository.createZone(params.request)
     }
+
+    data class Params(val request: CreateZoneRequest)
 }

@@ -51,6 +51,7 @@ import trillion.wms.core.ui.utils.InstantFormatter
 fun ZoneListScreen(
     onZoneItemClick: (Long) -> Unit,
     onAddZoneClick: () -> Unit,
+    onEditZoneClick: (Long) -> Unit,
     viewModel: ZoneListViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -60,6 +61,7 @@ fun ZoneListScreen(
         onZoneClick = { onZoneItemClick(it.id) },
         onCreateZoneClick = onAddZoneClick,
         onDeleteClick = viewModel::deleteZone,
+        onEditClick = { onEditZoneClick(it.id) },
         onRefresh = { viewModel.refresh(true) },
         onMessageShown = viewModel::clearMessage,
     )
@@ -72,6 +74,7 @@ private fun ZoneListScreen(
     onZoneClick: (Zone) -> Unit,
     onCreateZoneClick: () -> Unit,
     onDeleteClick: (Zone) -> Unit,
+    onEditClick: (Zone) -> Unit,
     onRefresh: () -> Unit,
     onMessageShown: (Long) -> Unit,
     modifier: Modifier = Modifier,
@@ -115,6 +118,7 @@ private fun ZoneListScreen(
                             zones = zones,
                             onZoneClick = onZoneClick,
                             onDeleteClick = onDeleteClick,
+                            onEditClick = onEditClick,
                             modifier = Modifier.padding(horizontal = 16.dp),
                         )
                     }
@@ -170,12 +174,14 @@ private fun ZoneListContent(
     zones: List<Zone>,
     onZoneClick: (Zone) -> Unit,
     onDeleteClick: (Zone) -> Unit,
+    onEditClick: (Zone) -> Unit,
     modifier: Modifier = Modifier
 ) {
     ZoneCardsGrid(
         zones = zones,
         onCardClick = onZoneClick,
         onDeleteZoneClick = onDeleteClick,
+        onEditClick = onEditClick,
         modifier = modifier,
     )
 }
@@ -185,6 +191,7 @@ private fun ZoneCardsGrid(
     zones: List<Zone>,
     onCardClick: (Zone) -> Unit,
     onDeleteZoneClick: (Zone) -> Unit,
+    onEditClick: (Zone) -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyVerticalGrid(
@@ -202,6 +209,7 @@ private fun ZoneCardsGrid(
                 zone = zones[index],
                 onClick = { onCardClick(zones[index]) },
                 onDeleteClick = { onDeleteZoneClick(zones[index]) },
+                onEditClick = { onEditClick(zones[index]) }
             )
         }
     }
@@ -212,6 +220,7 @@ private fun ZoneCard(
     zone: Zone,
     onClick: () -> Unit,
     onDeleteClick: () -> Unit,
+    onEditClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     SdsCard(
@@ -244,7 +253,10 @@ private fun ZoneCard(
                         )
                     }
                 }
-                ZoneActionsDropdown(onDeleteClick = onDeleteClick)
+                ZoneActionsDropdown(
+                    onDeleteClick = onDeleteClick,
+                    onEditClick = onEditClick,
+                )
             }
 
             Row(
@@ -278,6 +290,7 @@ private fun ZoneCard(
 private fun ZoneActionsDropdown(
     modifier: Modifier = Modifier,
     onDeleteClick: () -> Unit,
+    onEditClick: () -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
     DropdownIcon(
@@ -294,9 +307,28 @@ private fun ZoneActionsDropdown(
         menuItems = {
             SdsDropdownMenuItem(
                 text = { Text("삭제") },
+                leadingIcon = {
+                    Icon(
+                        vectorResource(Icons.Trash),
+                        contentDescription = null,
+                    )
+                },
                 onClick = {
                     expanded = false
                     onDeleteClick()
+                }
+            )
+            SdsDropdownMenuItem(
+                text = { Text("수정") },
+                leadingIcon = {
+                    Icon(
+                        vectorResource(Icons.Edit),
+                        contentDescription = null,
+                    )
+                },
+                onClick = {
+                    expanded = false
+                    onEditClick()
                 }
             )
         }

@@ -4,6 +4,7 @@ import trillion.wms.core.ui.model.FormSubmitState
 import trillion.wms.core.ui.model.TextFormFieldState
 
 data class ZoneFormUiState(
+    val isEditMode: Boolean,
     val nameField: TextFormFieldState = TextFormFieldState(value = ""),
     val descriptionField: TextFormFieldState = TextFormFieldState(value = ""),
     val formSubmitState: FormSubmitState = FormSubmitState.IDLE,

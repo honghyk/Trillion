@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 import trillion.wms.core.designsystem.component.FormDialog
 import trillion.wms.core.designsystem.component.FormButtonState
 import trillion.wms.core.designsystem.component.FormHorizontalTwoButton
@@ -21,8 +22,9 @@ import trillion.wms.core.ui.model.TextFormFieldState
 
 @Composable
 fun ZoneFormDialog(
+    zoneId: Long?,
     onDismiss: () -> Unit,
-    viewModel: ZoneFormViewModel = koinViewModel(),
+    viewModel: ZoneFormViewModel = koinViewModel { parametersOf(zoneId) },
     modifier: Modifier = Modifier,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -55,14 +57,14 @@ private fun ZoneFormDialog(
         modifier = modifier,
         title = {
             FormDialogTitle(
-                title = "구역 생성",
+                title = if (uiState.isEditMode) "구역 수정" else "구역 생성",
                 onDismiss = onDismiss
             )
         },
         action = {
             FormHorizontalTwoButton(
                 primaryButtonState = FormButtonState(
-                    text = "구역 생성",
+                    text = "확인",
                     enabled = uiState.submitEnabled,
                     loading = uiState.formSubmitState == FormSubmitState.IN_PROGRESS,
                     onClick = onSubmit,
@@ -104,6 +106,7 @@ private fun ZoneFormScreenPreview() {
     SdsTheme {
         ZoneFormDialog(
             uiState = ZoneFormUiState(
+                isEditMode = false,
                 nameField = TextFormFieldState(value = "A-1"),
                 descriptionField = TextFormFieldState(value = ""),
             ),

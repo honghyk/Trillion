@@ -11,6 +11,7 @@ val usecaseModule = module {
     factoryOf(::GetZonesStreamUseCase)
     factoryOf(::DeleteZoneUseCase)
     factoryOf(::CreateZoneUseCase)
+    factoryOf(::UpdateZoneUseCase)
     factoryOf(::GetZoneStreamUseCase)
     factoryOf(::GetFabricRollsStreamUseCase)
     factoryOf(::GetFabricRollStreamUseCase)

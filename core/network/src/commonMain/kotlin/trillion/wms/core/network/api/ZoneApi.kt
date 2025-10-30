@@ -43,6 +43,7 @@ internal class SupabaseZoneApi(
     override suspend fun updateZone(zoneId: Long, payload: ZoneUpdatePayload): ZoneDto {
         return supabaseClient.from(RemoteTable.ZONE.tableName)
             .update(payload) {
+                select()
                 filter { eq("id", zoneId) }
             }
             .decodeSingle()
