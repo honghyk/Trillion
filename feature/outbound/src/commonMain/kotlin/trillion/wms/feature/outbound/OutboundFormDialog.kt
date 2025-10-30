@@ -111,13 +111,13 @@ private fun OutboundFormScreen(
             onLengthUnitSelected = onLengthUnitChange,
         )
         FormTextField(
-            label = "Buyer *",
+            label = "바이어 *",
             placeholder = "바이어를 입력하세요",
             value = uiState.buyerField.value,
             onValueChange = onBuyerChange,
         )
         FormDateField(
-            label = "Date *",
+            label = "출고일 *",
             value = uiState.dateField.value,
             placeholder = "2025-01-01",
             isError = uiState.dateField.isError,
