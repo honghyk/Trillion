@@ -24,7 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.window.core.layout.WindowWidthSizeClass
+import androidx.window.core.layout.WindowSizeClass
 import trillion.wms.core.designsystem.theme.SdsTheme
 
 @Composable
@@ -34,13 +34,13 @@ fun DashboardGrid(
     verticalArrangement: Arrangement.Vertical = Arrangement.spacedBy(12.dp),
     content: @Composable FlowRowScope.() -> Unit,
 ) {
-    val windowWidthSizeClass = currentWindowAdaptiveInfo().windowSizeClass.windowWidthSizeClass
-    val maxItemsInEachRow = when (windowWidthSizeClass) {
-        WindowWidthSizeClass.COMPACT -> 2
-        WindowWidthSizeClass.MEDIUM -> 3
-        WindowWidthSizeClass.EXPANDED -> 4
-        else -> 2
+    val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
+    val maxItemsInEachRow = when {
+        windowSizeClass.minWidthDp.dp < WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND.dp -> 2
+        windowSizeClass.minWidthDp.dp < WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND.dp -> 3
+        else -> 4
     }
+
     FlowRow(
         modifier = modifier,
         maxItemsInEachRow = maxItemsInEachRow,
@@ -59,8 +59,8 @@ fun DashboardCard(
     modifier: Modifier = Modifier,
     description: String? = null,
 ) {
-    val windowWidthSizeClass = currentWindowAdaptiveInfo().windowSizeClass.windowWidthSizeClass
-    if (windowWidthSizeClass == WindowWidthSizeClass.COMPACT) {
+    val windowMinWidth = currentWindowAdaptiveInfo().windowSizeClass.minWidthDp.dp
+    if (windowMinWidth < WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND.dp) {
         SimpleDashboardCard(
             icon = icon,
             title = title,

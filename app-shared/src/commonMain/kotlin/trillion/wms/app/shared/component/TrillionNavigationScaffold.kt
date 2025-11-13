@@ -4,14 +4,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.window.core.layout.WindowHeightSizeClass
-import androidx.window.core.layout.WindowWidthSizeClass
+import androidx.compose.ui.unit.dp
+import androidx.window.core.layout.WindowSizeClass
 import trillion.wms.core.designsystem.component.SdsDrawerDefaults
 import trillion.wms.core.designsystem.component.SdsNavigationBarDefaults
 import trillion.wms.core.designsystem.component.SdsNavigationRailDefaults
@@ -31,12 +30,11 @@ fun TrillionNavigationScaffold(
     val navigationBarType = remember(windowAdaptiveInfo) {
         with(windowAdaptiveInfo) {
             when {
-                windowPosture.isTabletop || windowSizeClass.windowHeightSizeClass == WindowHeightSizeClass.COMPACT ->
+                windowPosture.isTabletop || windowSizeClass.minWidthDp.dp < WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND.dp ->
                     NavigationBarType.BottomNavigation
 
-                windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.MEDIUM -> NavigationBarType.NavigationRail
-                windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.EXPANDED -> NavigationBarType.NavigationDrawer
-                else -> NavigationBarType.BottomNavigation
+                windowSizeClass.minWidthDp.dp < WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND.dp -> NavigationBarType.NavigationRail
+                else -> NavigationBarType.NavigationDrawer
             }
         }
     }

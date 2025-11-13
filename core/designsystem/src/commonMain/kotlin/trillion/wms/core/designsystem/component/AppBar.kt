@@ -183,6 +183,7 @@ data class SdsTopAppBarColors(
         scrolledContainerColor = scrolledContainerColor,
         navigationIconContentColor = navigationIconContentColor,
         titleContentColor = titleContentColor,
+        subtitleContentColor = titleContentColor,
         actionIconContentColor = actionIconContentColor,
     )
 }
