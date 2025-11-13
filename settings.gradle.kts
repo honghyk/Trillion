@@ -35,7 +35,8 @@ plugins {
 
 include(
     ":composeApp",
-    ":app-shared"
+    ":app-shared",
+    ":android-app",
 )
 
 include(

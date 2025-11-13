@@ -32,7 +32,7 @@ jobs:
 
     - name: Build Android app
       if: matrix.os == 'ubuntu-latest'
-      run: ./gradlew :composeApp:assembleDebug
+      run: ./gradlew :android-app:assembleDebug
 
     - name: Build JVM app
       run: ./gradlew :composeApp:jvmJar
