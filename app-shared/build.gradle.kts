@@ -1,3 +1,6 @@
+import org.gradle.kotlin.dsl.withType
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
+
 plugins {
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.trillion.wms.androidLibrary)
@@ -26,6 +29,13 @@ kotlin {
 
             implementation(libs.navgation.compose)
             implementation(libs.kotlinx.serialization)
+        }
+    }
+
+    targets.withType<KotlinNativeTarget>().configureEach {
+        binaries.framework {
+            baseName = "shared"
+            isStatic = true
         }
     }
 }
