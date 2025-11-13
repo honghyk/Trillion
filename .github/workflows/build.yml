@@ -35,7 +35,7 @@ jobs:
       run: ./gradlew :android-app:assembleDebug
 
     - name: Build JVM app
-      run: ./gradlew :composeApp:jvmJar
+      run: ./gradlew :desktop-app:jvmJar
 
   build-ios:
     name: Build iOS
