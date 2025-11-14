@@ -1,5 +1,6 @@
 package trillion.wms.feature.fabricroll.form
 
+import androidx.compose.runtime.Stable
 import trillion.wms.core.ui.model.LengthUnit
 import trillion.wms.core.ui.model.NumberFieldState
 import trillion.wms.core.ui.model.FormSubmitState
@@ -10,6 +11,7 @@ import trillion.wms.core.ui.model.DateFieldState
 import trillion.wms.core.ui.utils.InstantFormatter
 import kotlin.time.Clock
 
+@Stable
 data class FabricRollFormUiState(
     val isInEditMode: Boolean,
     val zones: List<Zone> = emptyList(),

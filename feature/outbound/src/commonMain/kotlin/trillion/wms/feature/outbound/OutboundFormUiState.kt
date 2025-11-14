@@ -1,5 +1,6 @@
 package trillion.wms.feature.outbound
 
+import androidx.compose.runtime.Stable
 import trillion.wms.core.ui.model.DateFieldState
 import trillion.wms.core.ui.model.FormFieldState
 import trillion.wms.core.ui.model.FormSubmitState
@@ -12,6 +13,7 @@ import trillion.wms.core.ui.utils.InstantFormatter
 import trillion.wms.core.ui.utils.formatDecimal
 import kotlin.time.Clock
 
+@Stable
 data class OutboundFormUiState(
     val itemNo: String = "",
     val orderNo: String = "",

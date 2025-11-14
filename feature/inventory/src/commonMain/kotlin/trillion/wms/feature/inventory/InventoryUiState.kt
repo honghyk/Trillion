@@ -1,5 +1,6 @@
 package trillion.wms.feature.inventory
 
+import androidx.compose.runtime.Stable
 import trillion.wms.core.ui.model.LengthUnit
 import trillion.wms.core.ui.utils.UiResult
 import trillion.wms.core.model.FabricRoll
@@ -8,11 +9,13 @@ import trillion.wms.core.model.Zone
 import trillion.wms.core.ui.utils.UiMessage
 
 
+@Stable
 data class InventoryUiState(
     val search: SearchUiState = SearchUiState(),
     val message: UiMessage? = null,
 )
 
+@Stable
 data class SearchUiState(
     val searchQuery: String = "",
     val filters: Filters = Filters(),
