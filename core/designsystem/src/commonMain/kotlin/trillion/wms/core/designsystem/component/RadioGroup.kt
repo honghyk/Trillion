@@ -1,6 +1,7 @@
 package trillion.wms.core.designsystem.component
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -13,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.semantics.Role
@@ -33,7 +35,8 @@ fun SdsRadioGroup(
                 shape = shape
             )
             .padding(4.dp)
-            .selectableGroup(),
+            .selectableGroup()
+            .focusProperties { canFocus = false },
         content = content,
     )
 }
