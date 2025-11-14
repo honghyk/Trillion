@@ -12,6 +12,7 @@ kotlin {
             implementation(projects.core.designsystem)
             implementation(projects.core.model)
 
+            implementation(compose.components.resources)
             implementation(libs.navgation.compose)
         }
 
