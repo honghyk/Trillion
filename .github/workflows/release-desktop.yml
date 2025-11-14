@@ -1,10 +1,10 @@
-name: Release
+name: Release Desktop App
 
 on:
   push:
     tags:
-      - 'v*.*.*'         # 정식 릴리즈 태그 (ex: v1.0.0)
-      - '*.*.*-test.*'   # 테스트 빌드 태그 (ex: 1.0.0-test.1)
+      - 'v*.*.*'
+      - '*.*.*-rc-*'
 
 jobs:
   desktop:
@@ -27,7 +27,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Create local.properties
         run: echo "${{ secrets.LOCAL_PROPERTIES }}" > local.properties
@@ -44,4 +44,4 @@ jobs:
             desktop-app/build/compose/binaries/main-release/**/*.msi
             desktop-app/build/compose/binaries/main-release/**/*.exe
           name: ${{ github.ref_name }}
-          prerelease: ${{ contains(github.ref_name, '-test') }}
+          prerelease: ${{ contains(github.ref_name, '-rc') }}
