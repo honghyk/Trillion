@@ -4,9 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.requiredSizeIn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonColors
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LocalContentColor
@@ -16,6 +14,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import trillion.wms.core.designsystem.theme.SdsTheme
@@ -26,12 +25,7 @@ fun SdsIconButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource? = null,
-    colors: IconButtonColors = IconButtonDefaults.iconButtonColors(
-        containerColor = SdsTheme.colorScheme.backgroundDefaultDefault,
-        contentColor = SdsTheme.colorScheme.iconDefaultDefault,
-        disabledContainerColor = SdsTheme.colorScheme.backgroundDisabled,
-        disabledContentColor = SdsTheme.colorScheme.iconDisabled,
-    ),
+    colors: IconButtonColors = SdsIconButtonDefaults.iconButtonColors(),
     content: @Composable () -> Unit,
 ) {
     val containerColor = if (enabled) colors.containerColor else colors.disabledContainerColor
@@ -53,4 +47,20 @@ fun SdsIconButton(
             content()
         }
     }
+}
+
+object SdsIconButtonDefaults {
+
+    @Composable
+    fun iconButtonColors(
+        containerColor: Color = SdsTheme.colorScheme.backgroundDefaultDefault,
+        contentColor: Color = SdsTheme.colorScheme.iconDefaultDefault,
+        disabledContainerColor: Color = SdsTheme.colorScheme.backgroundDisabled,
+        disabledContentColor: Color = SdsTheme.colorScheme.iconDisabled,
+    ): IconButtonColors = IconButtonDefaults.iconButtonColors(
+        containerColor = containerColor,
+        contentColor = contentColor,
+        disabledContainerColor = disabledContainerColor,
+        disabledContentColor = disabledContentColor,
+    )
 }

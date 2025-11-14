@@ -242,6 +242,9 @@ private class SdsTopAppBarNavScopeImpl(
         SdsIconButton(
             modifier = Modifier.size(48.dp),
             onClick = onClick,
+            colors = SdsIconButtonDefaults.iconButtonColors(
+                containerColor = colors.containerColor,
+            ),
             enabled = enabled,
         ) {
             Icon(
@@ -261,6 +264,9 @@ private class SdsTopAppBarNavScopeImpl(
         SdsIconButton(
             modifier = Modifier.size(48.dp),
             onClick = onClick,
+            colors = SdsIconButtonDefaults.iconButtonColors(
+                containerColor = colors.containerColor,
+            ),
             enabled = enabled,
         ) {
             Icon(
@@ -313,6 +319,9 @@ private class SdsTopAppBarActionsScopeImpl(
             modifier = Modifier
                 .size(TopAppBarIconButtonSize),
             onClick = onClick,
+            colors = SdsIconButtonDefaults.iconButtonColors(
+                containerColor = colors.containerColor,
+            ),
             enabled = enabled,
             content = {
                 Icon(
@@ -372,3 +381,20 @@ private class SdsTopAppBarActionsScopeImpl(
 
 private val TopAppBarIconButtonSize = 48.dp
 private val TopAppBarIconSize = 20.dp
+
+@Composable
+@Preview
+private fun AppBarPreview() {
+    SdsTheme {
+        SdsTopAppBar(
+            title = { Text("Title") },
+            navigationIcon = {
+                BackIcon(onClick = {})
+            },
+            actions = {
+                RefreshIcon(isRefreshing = false, onClick = {})
+                ActionText(text = "Action", onClick = {})
+            }
+        )
+    }
+}
