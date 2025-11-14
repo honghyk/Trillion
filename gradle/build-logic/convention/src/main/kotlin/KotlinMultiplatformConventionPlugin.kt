@@ -12,7 +12,7 @@ class KotlinMultiplatformConventionPlugin : Plugin<Project> {
         }
 
         extensions.configure<KotlinMultiplatformExtension> {
-            jvmToolchain(21)
+            jvmToolchain(17)
 
             if (hasAndroidPlugin()) {
                 androidTarget()

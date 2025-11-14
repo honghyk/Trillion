@@ -1,4 +1,4 @@
-name: Build and Test
+name: Build
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ develop ]
 
 jobs:
-  build-and-test:
+  build:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -34,7 +34,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: ./gradlew :android-app:assembleDebug
 
-    - name: Build JVM app
+    - name: Build Desktop app
       run: ./gradlew :desktop-app:jvmJar
 
   build-ios:

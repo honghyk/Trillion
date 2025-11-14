@@ -26,17 +26,30 @@ compose.desktop {
     application {
         mainClass = "trillion.wms.MainKt"
 
+        buildTypes.release.proguard {
+            obfuscate.set(false)
+            isEnabled.set(false)
+        }
+
         nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "trillion.wms"
+            targetFormats(
+                // MacOS
+                TargetFormat.Dmg,
+                // Windows
+                TargetFormat.Msi,
+                TargetFormat.Exe,
+            )
+            packageName = "Trillion"
             packageVersion = "1.0.0"
 
             windows {
                 shortcut = true
+                iconFile.set(project.file("src/jvmMain/resources/AppIcon.ico"))
             }
 
             macOS {
                 dockName = "Trillion"
+                iconFile.set(project.file("src/jvmMain/resources/AppIcon.icns"))
             }
         }
     }
