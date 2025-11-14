@@ -8,6 +8,7 @@ import org.mobilenativefoundation.store.store5.StoreReadResponse
 import org.mobilenativefoundation.store.store5.impl.extensions.fresh
 import trillion.wms.core.data.repository.api.RollOutboundHistoryRepository
 import trillion.wms.core.data.store.OutboundHistoriesStore
+import trillion.wms.core.data.util.filterForResult
 import trillion.wms.core.database.datasource.OutboundHistoryLocalDataSource
 import trillion.wms.core.model.OutboundHistory
 import trillion.wms.core.network.datasource.OutboundHistoryRemoteDataSource
@@ -21,7 +22,7 @@ class DefaultRollOutboundHistoryRepository(
     override fun getOutboundHistories(rollId: Long): Flow<List<OutboundHistory>> {
         return outboundHistoriesStore
             .stream(StoreReadRequest.cached(rollId, refresh = false))
-            .filter { it is StoreReadResponse.Data }
+            .filterForResult()
             .map { it.requireData() }
     }
 

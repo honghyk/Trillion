@@ -3,6 +3,7 @@ package trillion.wms.core.data.repository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -12,6 +13,7 @@ import org.mobilenativefoundation.store.store5.impl.extensions.fresh
 import trillion.wms.core.data.repository.api.ZonesRepository
 import trillion.wms.core.data.store.ZonesStore
 import trillion.wms.core.data.store.ZoneStore
+import trillion.wms.core.data.util.filterForResult
 import trillion.wms.core.database.datasource.FabricRollLocalDataSource
 import trillion.wms.core.database.datasource.ZoneLocalDataSource
 import trillion.wms.core.model.CreateZoneRequest
@@ -30,7 +32,7 @@ internal class DefaultZonesRepository(
     override fun getZoneStream(id: Long): Flow<Zone?> {
         return zoneStore
             .stream(StoreReadRequest.cached(id, refresh = false))
-            .filter { it is StoreReadResponse.Data }
+            .filterForResult()
             .map { it.requireData() }
     }
 
@@ -48,7 +50,7 @@ internal class DefaultZonesRepository(
     override fun getZonesStream(): Flow<List<Zone>> {
         return zonesStore
             .stream(StoreReadRequest.cached(Unit, refresh = false))
-            .filter { it is StoreReadResponse.Data }
+            .filterForResult()
             .map { it.requireData() }
     }
 

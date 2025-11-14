@@ -10,6 +10,7 @@ import org.mobilenativefoundation.store.store5.impl.extensions.get
 import trillion.wms.core.data.repository.api.FabricRollsRepository
 import trillion.wms.core.data.store.FabricRollStore
 import trillion.wms.core.data.store.FabricRollsStore
+import trillion.wms.core.data.util.filterForResult
 import trillion.wms.core.database.datasource.FabricRollLocalDataSource
 import trillion.wms.core.model.AddFabricRollRequest
 import trillion.wms.core.model.FabricRoll
@@ -27,14 +28,14 @@ internal class DefaultFabricRollsRepository(
     override fun getFabricRoll(id: Long): Flow<FabricRoll?> {
         return fabricRollStore
             .stream(StoreReadRequest.cached(id, refresh = false))
-            .filter { it is StoreReadResponse.Data }
+            .filterForResult()
             .map { it.dataOrNull() }
     }
 
     override fun getFabricRolls(zoneId: Long, forceFresh: Boolean): Flow<List<FabricRoll>> {
         return fabricRollsStore
             .stream(StoreReadRequest.cached(zoneId, refresh = false))
-            .filter { it is StoreReadResponse.Data }
+            .filterForResult()
             .map { it.requireData() }
     }
 
