@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "86505466d1347465f814b9c0fc51f615",
+    "identityHash": "9707b204b7040100d03c4f9f2463a5d0",
     "entities": [
       {
         "tableName": "zones",
@@ -160,7 +160,7 @@
       },
       {
         "tableName": "outbound_histories",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `roll_id` INTEGER NOT NULL, `quantity` REAL NOT NULL, `created_at` INTEGER NOT NULL, `buyer` TEXT NOT NULL, `remark` TEXT, PRIMARY KEY(`id`), FOREIGN KEY(`roll_id`) REFERENCES `fabric_rolls`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `roll_id` INTEGER NOT NULL, `quantity` REAL NOT NULL, `created_at` INTEGER NOT NULL, `buyer` TEXT NOT NULL, `remark` TEXT, PRIMARY KEY(`id`), FOREIGN KEY(`roll_id`) REFERENCES `fabric_rolls`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -218,7 +218,7 @@
         "foreignKeys": [
           {
             "table": "fabric_rolls",
-            "onDelete": "NO ACTION",
+            "onDelete": "CASCADE",
             "onUpdate": "NO ACTION",
             "columns": [
               "roll_id"
@@ -232,7 +232,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '86505466d1347465f814b9c0fc51f615')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '9707b204b7040100d03c4f9f2463a5d0')"
     ]
   }
 }

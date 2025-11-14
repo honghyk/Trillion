@@ -15,6 +15,7 @@ import kotlin.time.Instant
             entity = FabricRollEntity::class,
             parentColumns = ["id"],
             childColumns = ["roll_id"],
+            onDelete = ForeignKey.CASCADE
         )
     ],
     indices = [
