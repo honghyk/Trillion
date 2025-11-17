@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.jetbrains.compose.resources.vectorResource
 import org.koin.compose.viewmodel.koinViewModel
+import trillion.wms.core.designsystem.component.SdsAlertDialog
 import trillion.wms.core.designsystem.component.DropdownIcon
 import trillion.wms.core.designsystem.component.Icons
 import trillion.wms.core.designsystem.component.SdsCard
@@ -223,6 +224,17 @@ private fun ZoneCard(
     onEditClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var showDeleteConfirmDialog by remember { mutableStateOf(false) }
+    if (showDeleteConfirmDialog) {
+        DeleteConfirmDialog(
+            onDismiss = { showDeleteConfirmDialog = false },
+            onConfirm = {
+                showDeleteConfirmDialog = false
+                onDeleteClick()
+            },
+        )
+    }
+
     SdsCard(
         onClick = onClick,
         modifier = modifier.fillMaxWidth(),
@@ -254,7 +266,7 @@ private fun ZoneCard(
                     }
                 }
                 ZoneActionsDropdown(
-                    onDeleteClick = onDeleteClick,
+                    onDeleteClick = { showDeleteConfirmDialog = true },
                     onEditClick = onEditClick,
                 )
             }
@@ -332,5 +344,24 @@ private fun ZoneActionsDropdown(
                 }
             )
         }
+    )
+}
+
+@Composable
+private fun DeleteConfirmDialog(
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    SdsAlertDialog(
+        onDismiss = onDismiss,
+        onConfirm = onConfirm,
+        title = "구역 삭제",
+        text = """
+            선택한 구역을 삭제하시겠습니까?
+
+            이 작업은 구역 내 모든 원단 롤과 출고 내역을 영구적으로 삭제합니다.
+        """.trimIndent(),
+        confirmButtonText = "삭제",
+        dismissButtonText = "취소",
     )
 }

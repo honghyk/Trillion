@@ -22,7 +22,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.SubcomposeLayout
@@ -35,6 +37,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import trillion.wms.core.designsystem.component.ButtonVariant
 import trillion.wms.core.designsystem.component.DropdownTextField
 import trillion.wms.core.designsystem.component.Icons
+import trillion.wms.core.designsystem.component.SdsAlertDialog
 import trillion.wms.core.designsystem.component.SdsOutlineButton
 import trillion.wms.core.designsystem.component.SdsScaffold
 import trillion.wms.core.designsystem.component.SdsTextField
@@ -278,6 +281,18 @@ private fun FabricRollsTable(
     onDeleteFabricRollClick: (FabricRoll) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var fabricRollToDelete by remember { mutableStateOf<FabricRoll?>(null) }
+    if (fabricRollToDelete != null) {
+        DeleteConfirmDialog(
+            fabricRollToDelete = fabricRollToDelete!!,
+            onDismiss = { fabricRollToDelete = null },
+            onConfirm = {
+                onDeleteFabricRollClick(fabricRollToDelete!!)
+                fabricRollToDelete = null
+            }
+        )
+    }
+
     FabricRollTable(
         modifier = modifier.fillMaxWidth(),
         fabricRolls = fabricRolls,
@@ -300,11 +315,32 @@ private fun FabricRollsTable(
                 buttonVariant = ButtonVariant.Primary,
                 leadingIcon = vectorResource(Icons.Trash),
                 text = "삭제",
-                onClick = { onDeleteFabricRollClick(fabricRoll) }
+                onClick = { fabricRollToDelete = fabricRoll }
             )
         }
     )
 }
+
+@Composable
+private fun DeleteConfirmDialog(
+    fabricRollToDelete: FabricRoll,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    SdsAlertDialog(
+        onDismiss = onDismiss,
+        onConfirm = onConfirm,
+        title = "원단 롤 삭제",
+        text = """
+            원단 롤 "${fabricRollToDelete.itemNo}"을(를) 삭제하시겠습니까?
+
+            이 작업은 원단 롤과 모든 출고 내역을 영구적으로 삭제합니다.
+        """.trimIndent(),
+        confirmButtonText = "삭제",
+        dismissButtonText = "취소",
+    )
+}
+
 
 @Composable
 private fun AdaptiveSearchLayout(
